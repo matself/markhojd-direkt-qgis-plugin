@@ -1,5 +1,6 @@
 """Panel och logik för Markhöjd direkt."""
 
+import math
 import os
 
 from qgis.core import (
@@ -47,6 +48,7 @@ from .map_tools import ClickTool, PolygonTool
 
 CRS_3006 = QgsCoordinateReferenceSystem("EPSG:3006")
 SETTINGS = "markhojd_direkt/"
+EXACT_COUNT_MAX_CELLS = 200_000  # över detta uppskattas antalet i stället för att räknas exakt
 TEST_POINT = (616919.8, 6728782.96)  # exempelpunkt ur Lantmäteriets tekniska beskrivning
 
 
@@ -356,12 +358,26 @@ class MarkhojdDock(QDockWidget):
             self.btn_fetch.setEnabled(False)
             return
         area = self.geom.area()
-        n, req = core.estimate_grid(area, self.spacing.value())
-        txt = f"Yta {area / 10000:,.2f} ha ≈ {n:,} punkter i {req} anrop.".replace(",", " ")
-        if n > self.maxpts.value():
-            txt += f" Över max ({self.maxpts.value():,}); öka punktavståndet.".replace(",", " ")
-        self.info.setText(txt)
-        self.btn_fetch.setEnabled(0 < n <= self.maxpts.value() and not self._running)
+        spacing, maxpts = self.spacing.value(), self.maxpts.value()
+        bb = self.geom.boundingBox()
+        if bb.area() / (spacing * spacing) <= EXACT_COUNT_MAX_CELLS:
+            pts = grid_points(self.geom, spacing, limit=maxpts)
+            n = maxpts + 1 if pts is None else len(pts)  # None = över maxgränsen
+            exact = pts is not None
+        else:
+            n, exact = core.estimate_grid(area, spacing)[0], False
+        req = max(1, math.ceil(n / core.MAX_POINTS_PER_REQUEST)) if n else 0
+        head = f"Yta {area / 10000:,.2f} ha: "
+        if exact:
+            txt = head + f"{n:,} punkter i {req} anrop."
+        elif n > maxpts and bb.area() / (spacing * spacing) <= EXACT_COUNT_MAX_CELLS:
+            txt = head + f"fler än max ({maxpts:,}) punkter; öka punktavståndet."
+        else:
+            txt = head + f"ca {n:,} punkter i ca {req} anrop."
+            if n > maxpts:
+                txt += " Över max; öka punktavståndet."
+        self.info.setText(txt.replace(",", " "))
+        self.btn_fetch.setEnabled(0 < n <= maxpts and not self._running)
 
     def auto_spacing(self):
         if self.geom:
