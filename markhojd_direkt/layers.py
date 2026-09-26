@@ -62,8 +62,9 @@ def style_layer(layer, font_family, font_size, decimals):
     s.isExpression = True
     s.placement = Qgis.LabelPlacement.OverPoint
     s.setFormat(fmt)
+    s.quadOffset = Qgis.LabelQuadrantPosition.Right  # texten till höger om punkten, vertikalt centrerad
     s.xOffset = 1.5
-    s.yOffset = 1.5
+    s.yOffset = 0
     s.dist = 0
     layer.setLabeling(QgsVectorLayerSimpleLabeling(s))
     layer.setLabelsEnabled(layer.featureCount() <= MAX_LABELED)
