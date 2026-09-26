@@ -1,4 +1,4 @@
-﻿[general]
+[general]
 name=Markhöjd direkt (Lantmäteriet)
 qgisMinimumVersion=3.34
 description=Hämta markhöjd från Lantmäteriets tjänst Markhöjd Direkt: klicka i kartan eller skapa ett höjdgrid i ett område.
