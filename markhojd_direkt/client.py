@@ -2,16 +2,17 @@
 
 Tjänsten anropas med HTTP Basic (användarnamn/lösenord för systemkontot), på samma sätt som
 i HAJK. Uppgifterna läses ur QGIS autentiseringsdatabas och skickas som Authorization-header.
-QGIS egen autentiseringshantering vid själva anropet undviks eftersom den kraschade QGIS.
+QGIS egen nätverks- och autentiseringshantering undviks: den kraschade QGIS och öppnar
+inloggningsrutor vid 401.
 """
 
 import base64
 import json
 import time
 
-from qgis.core import QgsApplication, QgsAuthMethodConfig, QgsBlockingNetworkRequest
+from qgis.core import QgsApplication, QgsAuthMethodConfig, QgsNetworkAccessManager
 from qgis.PyQt.QtCore import QEventLoop, QTimer, QUrl
-from qgis.PyQt.QtNetwork import QNetworkRequest
+from qgis.PyQt.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 
 from . import core
 
@@ -52,6 +53,9 @@ def load_credentials(authcfg):
     return cid, secret
 
 
+TIMEOUT_MS = 60_000
+
+
 class MarkhojdClient:
     def __init__(self, authcfg, environment="production", min_interval=0.2):
         self.authcfg = authcfg
@@ -59,6 +63,8 @@ class MarkhojdClient:
         self.min_interval = min_interval
         self._last = 0.0
         self._basic = None
+        self._nam = QNetworkAccessManager()
+        self._nam.setProxy(QgsNetworkAccessManager.instance().fallbackProxy())
 
     def _auth_header(self):
         if not self.authcfg:
@@ -79,25 +85,31 @@ class MarkhojdClient:
             auth = self._auth_header()
             if auth:
                 req.setRawHeader(b"Authorization", auth)
-            br = QgsBlockingNetworkRequest()
             if body is None:
-                err = br.get(req)
+                reply = self._nam.get(req)
             else:
                 req.setHeader(QNetworkRequest.ContentTypeHeader, "application/json")
-                err = br.post(req, body)
+                reply = self._nam.post(req, body)
+            loop = QEventLoop()
+            reply.finished.connect(loop.quit)
+            QTimer.singleShot(TIMEOUT_MS, loop.quit)
+            loop.exec()
+            if not reply.isFinished():
+                reply.abort()
             self._last = time.monotonic()
 
-            reply = br.reply()
             status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
-            text = bytes(reply.content()).decode("utf-8", errors="replace")
-            if err == QgsBlockingNetworkRequest.NoError and status in (None, 200):
+            text = bytes(reply.readAll()).decode("utf-8", errors="replace")
+            retry_after = bytes(reply.rawHeader(b"Retry-After")).decode()
+            net_error = reply.errorString() if reply.error() != QNetworkReply.NoError else ""
+            reply.deleteLater()
+            if status == 200:
                 try:
                     return json.loads(text)
                 except ValueError as e:
                     raise MarkhojdError(f"Ogiltigt svar från tjänsten: {e}")
             # Tjänsten strypt eller tillfälligt otillgänglig: vänta och försök igen
             if status in (429, 503) and attempt < MAX_RETRIES:
-                retry_after = bytes(reply.rawHeader(b"Retry-After")).decode() or ""
                 delay = float(retry_after) if retry_after.replace(".", "").isdigit() else 2.0 * attempt
                 _pause(min(delay, 60))
                 continue
@@ -106,8 +118,8 @@ class MarkhojdClient:
                     f"Åtkomst nekad ({status}). Kontrollera användarnamn/lösenord och att systemkontot har beställt "
                     "Markhöjd Direkt och att rätt miljö (produktion/verifiering) är vald."
                 )
-            detail = core.parse_fault(text) or br.errorMessage()
-            raise MarkhojdError(f"HTTP {status}: {detail}")
+            detail = core.parse_fault(text) or net_error
+            raise MarkhojdError(f"HTTP {status}: {detail}" if status else f"Nätverksfel: {detail}")
         raise MarkhojdError("Tjänsten svarade inte efter flera försök.")
 
     def health(self):
