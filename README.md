@@ -14,16 +14,13 @@ Hämtar markhöjd från Lantmäteriets tjänst [Markhöjd Direkt](https://www.la
 
 ## Krav och anslutning
 
-Tjänsten är bara öppen för systemkonto som har beställt Markhöjd Direkt. Pluginet använder QGIS
-autentiseringsdatabas (OAuth2, *client credentials*):
+Tjänsten är bara öppen för systemkonto som har beställt Markhöjd Direkt. Anrop görs med HTTP Basic
+(användarnamn och lösenord för systemkontot), på samma sätt som i HAJK. Uppgifterna sparas i QGIS
+autentiseringsdatabas:
 
 * Välj miljö (produktion / verifiering).
-* Klicka *Ny nyckel…* och ange consumer key/secret, eller välj en befintlig OAuth2-konfiguration, t.ex. den som
-  skapats för [Lantmäteriets tjänster](https://github.com/qgissverige/lantmateriet-qgis-plugin).
-  Token-URL ska vara `https://apimanager.lantmateriet.se/oauth2/token` (verifiering: `apimanager-ver…`).
+* Klicka *Ny nyckel…* och ange användarnamn och lösenord, eller välj en befintlig Basic-konfiguration.
 * *Testa* anropar `/health` och hämtar höjden i en testpunkt.
-
-Client credentials-flödet kräver QGIS 3.43 eller senare (t.ex. 3.44).
 
 ## Begränsningar i tjänsten
 

@@ -1,8 +1,8 @@
 """Klient mot Markhöjd Direkt (REST/JSON).
 
-Nyckeln (consumer key/secret) läses ur QGIS autentiseringsdatabas, men token hämtas här
-(OAuth2 client credentials) och skickas som Bearer-header. QGIS egen OAuth2-metod undviks
-eftersom den kraschade QGIS vid anrop från kartverktyg.
+Tjänsten anropas med HTTP Basic (användarnamn/lösenord för systemkontot), på samma sätt som
+i HAJK. Uppgifterna läses ur QGIS autentiseringsdatabas och skickas som Authorization-header.
+QGIS egen autentiseringshantering vid själva anropet undviks eftersom den kraschade QGIS.
 """
 
 import base64
@@ -19,11 +19,6 @@ BASE_URLS = {
     "production": "https://api.lantmateriet.se/distribution/produkter/markhojd/v1",
     "verification": "https://api-ver.lantmateriet.se/distribution/produkter/markhojd/v1",
 }
-AUTH_URLS = {
-    "production": "https://apimanager.lantmateriet.se/oauth2/",
-    "verification": "https://apimanager-ver.lantmateriet.se/oauth2/",
-}
-
 MAX_RETRIES = 5
 
 
@@ -39,7 +34,7 @@ def _pause(seconds):
 
 
 def load_credentials(authcfg):
-    """(client id, secret) ur en autentiseringskonfiguration (OAuth2 eller Basic)."""
+    """(användarnamn, lösenord) ur en autentiseringskonfiguration (Basic, eller nyckel/hemlighet ur OAuth2)."""
     cfg = QgsAuthMethodConfig()
     QgsApplication.authManager().loadAuthenticationConfig(authcfg, cfg, True)
     if not cfg.isValid():
@@ -53,7 +48,7 @@ def load_credentials(authcfg):
     else:
         cid, secret = cfg.config("username"), cfg.config("password")
     if not cid or not secret:
-        raise MarkhojdError("Konfigurationen saknar consumer key/secret. Använd 'Ny nyckel…'.")
+        raise MarkhojdError("Konfigurationen saknar användarnamn/lösenord. Använd 'Ny nyckel…'.")
     return cid, secret
 
 
@@ -61,53 +56,29 @@ class MarkhojdClient:
     def __init__(self, authcfg, environment="production", min_interval=0.2):
         self.authcfg = authcfg
         self.base_url = BASE_URLS[environment]
-        self.token_url = AUTH_URLS[environment] + "token"
         self.min_interval = min_interval
         self._last = 0.0
-        self._token = None
-        self._token_expires = 0.0
+        self._basic = None
 
-    def _get_token(self, force=False):
+    def _auth_header(self):
         if not self.authcfg:
             return None
-        if self._token and not force and time.monotonic() < self._token_expires:
-            return self._token
-        cid, secret = load_credentials(self.authcfg)
-        req = QNetworkRequest(QUrl(self.token_url))
-        req.setHeader(QNetworkRequest.ContentTypeHeader, "application/x-www-form-urlencoded")
-        basic = base64.b64encode(f"{cid}:{secret}".encode()).decode()
-        req.setRawHeader(b"Authorization", f"Basic {basic}".encode())
-        br = QgsBlockingNetworkRequest()
-        err = br.post(req, b"grant_type=client_credentials")
-        reply = br.reply()
-        text = bytes(reply.content()).decode("utf-8", errors="replace")
-        status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
-        if err != QgsBlockingNetworkRequest.NoError or status != 200:
-            raise MarkhojdError(
-                f"Kunde inte hämta åtkomsttoken (HTTP {status}). Kontrollera consumer key/secret och miljö. "
-                + (text[:200] if text else br.errorMessage())
-            )
-        try:
-            data = json.loads(text)
-            self._token = data["access_token"]
-        except (ValueError, KeyError):
-            raise MarkhojdError("Oväntat svar från token-tjänsten.")
-        # marginal på 60 s
-        self._token_expires = time.monotonic() + max(30, float(data.get("expires_in", 300)) - 60)
-        return self._token
+        if self._basic is None:
+            user, password = load_credentials(self.authcfg)
+            self._basic = base64.b64encode(f"{user}:{password}".encode()).decode()
+        return f"Basic {self._basic}".encode()
 
     def _request(self, path, body=None):
         url = self.base_url + path
-        refreshed = False
         for attempt in range(1, MAX_RETRIES + 1):
             wait = self.min_interval - (time.monotonic() - self._last)
             if wait > 0:
                 _pause(wait)
             req = QNetworkRequest(QUrl(url))
             req.setRawHeader(b"Accept", b"application/json")
-            token = self._get_token()
-            if token:
-                req.setRawHeader(b"Authorization", f"Bearer {token}".encode())
+            auth = self._auth_header()
+            if auth:
+                req.setRawHeader(b"Authorization", auth)
             br = QgsBlockingNetworkRequest()
             if body is None:
                 err = br.get(req)
@@ -124,10 +95,6 @@ class MarkhojdClient:
                     return json.loads(text)
                 except ValueError as e:
                     raise MarkhojdError(f"Ogiltigt svar från tjänsten: {e}")
-            if status == 401 and token and not refreshed:  # token kan ha gått ut
-                refreshed = True
-                self._get_token(force=True)
-                continue
             # Tjänsten strypt eller tillfälligt otillgänglig: vänta och försök igen
             if status in (429, 503) and attempt < MAX_RETRIES:
                 retry_after = bytes(reply.rawHeader(b"Retry-After")).decode() or ""
@@ -136,7 +103,7 @@ class MarkhojdClient:
                 continue
             if status in (401, 403):
                 raise MarkhojdError(
-                    f"Åtkomst nekad ({status}). Kontrollera att systemkontot har beställt "
+                    f"Åtkomst nekad ({status}). Kontrollera användarnamn/lösenord och att systemkontot har beställt "
                     "Markhöjd Direkt och att rätt miljö (produktion/verifiering) är vald."
                 )
             detail = core.parse_fault(text) or br.errorMessage()

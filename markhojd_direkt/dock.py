@@ -1,6 +1,5 @@
 """Panel och logik för Markhöjd direkt."""
 
-import json
 import os
 
 from qgis.core import (
@@ -42,7 +41,7 @@ from qgis.PyQt.QtWidgets import (
 )
 
 from . import core, layers
-from .client import AUTH_URLS, MarkhojdClient, MarkhojdError
+from .client import MarkhojdClient, MarkhojdError
 from .grid import grid_points
 from .map_tools import ClickTool, PolygonTool
 
@@ -52,7 +51,7 @@ TEST_POINT = (616919.8, 6728782.96)  # exempelpunkt ur Lantmäteriets tekniska b
 
 
 class KeyDialog(QDialog):
-    """Skapar en OAuth2-konfiguration (client credentials) i QGIS autentiseringsdatabas."""
+    """Sparar användarnamn/lösenord (Basic) i QGIS autentiseringsdatabas."""
 
     def __init__(self, environment, parent=None):
         super().__init__(parent)
@@ -60,38 +59,25 @@ class KeyDialog(QDialog):
         self.authcfg = None
         self.setWindowTitle("Ny anslutning till Lantmäteriet")
         form = QFormLayout(self)
-        self.client_id = QLineEdit()
-        self.client_secret = QLineEdit()
-        self.client_secret.setEchoMode(QLineEdit.Password)
-        form.addRow("Consumer key (client id)", self.client_id)
-        form.addRow("Consumer secret", self.client_secret)
+        self.user = QLineEdit()
+        self.password = QLineEdit()
+        self.password.setEchoMode(QLineEdit.Password)
+        form.addRow("Användarnamn", self.user)
+        form.addRow("Lösenord", self.password)
         bb = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         bb.accepted.connect(self.accept)
         bb.rejected.connect(self.reject)
         form.addRow(bb)
 
     def accept(self):
-        cid, secret = self.client_id.text().strip(), self.client_secret.text().strip()
-        if not cid or not secret:
+        user, password = self.user.text().strip(), self.password.text()
+        if not user or not password:
             return
-        base = AUTH_URLS[self.environment]
         cfg = QgsAuthMethodConfig()
-        cfg.setName(f"Markhöjd direkt ({self.environment}, {cid})")
-        cfg.setMethod("OAuth2")
-        cfg.setConfigMap(
-            {
-                "oauth2config": json.dumps(
-                    {
-                        "clientId": cid,
-                        "clientSecret": secret,
-                        "requestUrl": base + "authorize",
-                        "tokenUrl": base + "token",
-                        # Client credentials (systemkonto) finns i QGIS >= 3.43
-                        "grantFlow": 4 if Qgis.versionInt() >= 34300 else 3,
-                    }
-                )
-            }
-        )
+        cfg.setName(f"Markhöjd direkt ({self.environment}, {user})")
+        cfg.setMethod("Basic")
+        cfg.setConfig("username", user)
+        cfg.setConfig("password", password)
         am = QgsApplication.authManager()
         am.storeAuthenticationConfig(cfg)
         am.updateConfigAuthMethods()
