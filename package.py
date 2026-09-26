@@ -9,4 +9,5 @@ with zipfile.ZipFile(out / "markhojd_direkt.zip", "w", zipfile.ZIP_DEFLATED) as 
     for f in (root / "markhojd_direkt").rglob("*"):
         if f.is_file() and "__pycache__" not in f.parts:
             z.write(f, f.relative_to(root))
+    z.write(root / "LICENSE", "markhojd_direkt/LICENSE")  # licensen ska följa med i paketet
 print(out / "markhojd_direkt.zip")
