@@ -1,5 +1,8 @@
 # Ändringslogg
 
+## 0.1.2
+- Installation via plugin-arkiv (plugins.xml) och uppdaterad README.
+
 ## 0.1.1
 - Inloggning med användarnamn/lösenord (Basic) i stället för OAuth2; egen nätverkshanterare (inga krascher eller inloggningsrutor vid 401).
 - Höjdvärdet placeras till höger om punkten.
