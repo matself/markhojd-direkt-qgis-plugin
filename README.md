@@ -1,7 +1,13 @@
 # Markhöjd direkt (Lantmäteriet) – QGIS-plugin
 
+> **Disclaimer:** Detta plugin är fristående och har inget samband med, och är inte godkänt eller
+> tillhandahållet av, Lantmäteriet. Namnet *Lantmäteriet* används endast för att ange källan till
+> höjddata. Pluginet tillhandahålls i befintligt skick, utan garantier.
+
 Hämtar markhöjd från Lantmäteriets tjänst [Markhöjd Direkt](https://www.lantmateriet.se/sv/geodata/vara-produkter/produktlista/markhojd-direkt/)
 (nationella markhöjdmodellen, 1 m grid, höjdsystem RH 2000, rikstäckande).
+
+Fullständig beskrivning finns i [användarhandledningen](docs/anvandarhandledning.md).
 
 ## Funktioner
 

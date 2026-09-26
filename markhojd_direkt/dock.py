@@ -212,6 +212,13 @@ class MarkhojdDock(QDockWidget):
         v.addWidget(self.save_layer)
         v.addWidget(b_save)
         lay.addWidget(g)
+        note = QLabel(
+            "Fristående plugin, inte kopplat till Lantmäteriet. "
+            "Lantmäteriet används endast som namn på datakällan."
+        )
+        note.setWordWrap(True)
+        note.setStyleSheet("color: gray; font-size: 9pt;")
+        lay.addWidget(note)
         lay.addStretch()
 
         scroll = QScrollArea()
