@@ -60,4 +60,4 @@ pytest tests/test_core.py   # ren logik
 
 `tests/test_grid.py` kräver QGIS Python (`python-qgis.bat`).
 
-Licens: GPL-2.0-or-later (se `LICENSE`).
+Licens: GPL-3.0 (se `LICENSE`).
