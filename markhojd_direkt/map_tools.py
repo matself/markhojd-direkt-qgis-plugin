@@ -2,7 +2,7 @@
 
 from qgis.core import QgsGeometry, QgsPointXY, QgsWkbTypes
 from qgis.gui import QgsMapTool, QgsMapToolEmitPoint, QgsRubberBand
-from qgis.PyQt.QtCore import Qt, pyqtSignal
+from qgis.PyQt.QtCore import Qt, QTimer, pyqtSignal
 from qgis.PyQt.QtGui import QColor
 
 
@@ -15,7 +15,9 @@ class ClickTool(QgsMapToolEmitPoint):
 
     def canvasReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.clicked.emit(self.toMapCoordinates(event.pos()))
+            pt = self.toMapCoordinates(event.pos())
+            # nätverksanrop körs efter att händelsen hanterats klart
+            QTimer.singleShot(0, lambda: self.clicked.emit(pt))
 
 
 class PolygonTool(QgsMapTool):
