@@ -1,5 +1,9 @@
 # Ändringslogg
 
+## 0.1.5
+- Gridet varnar (orange text) när antalet punkter blir fler än 100, med förslag att öka punktavståndet - gridet är tänkt för t.ex. en tomtkarta, inte för att bygga en egen höjdmodell av punkterna.
+- Ny, frivillig knapp Visa profil för en hämtad linje: öppnar en panel i QGIS med avstånd/höjd som en graf, byggd på QGIS egen höjdprofilkomponent. Visas inte automatiskt.
+
 ## 0.1.4
 - En MultiLineString (flera linjedelar, blandad ordning/riktning) slås automatiskt ihop till en sammanhängande linje för höjder längs en linje. En verkligt osammanhängande linje (lucka) avvisas med ett tydligt meddelande i stället för att ge felaktiga avstånd.
 

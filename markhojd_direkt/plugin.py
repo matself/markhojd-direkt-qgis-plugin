@@ -33,5 +33,6 @@ class MarkhojdPlugin:
     def unload(self):
         self.iface.removePluginMenu(TITLE, self.action)
         self.iface.removeToolBarIcon(self.action)
+        self.dock.cleanup()
         self.iface.removeDockWidget(self.dock)
         self.dock.deleteLater()

@@ -17,8 +17,8 @@ from qgis.core import (
     QgsVectorLayer,
     QgsWkbTypes,
 )
-from qgis.gui import QgsAuthConfigSelect, QgsMapLayerComboBox
-from qgis.PyQt.QtCore import QTimer
+from qgis.gui import QgsAuthConfigSelect, QgsElevationProfileCanvas, QgsMapLayerComboBox
+from qgis.PyQt.QtCore import Qt, QTimer
 from qgis.PyQt.QtGui import QFont
 from qgis.PyQt.QtWidgets import (
     QComboBox,
@@ -50,6 +50,10 @@ from .map_tools import ClickTool, LineTool, PolygonTool
 CRS_3006 = QgsCoordinateReferenceSystem("EPSG:3006")
 SETTINGS = "markhojd_direkt/"
 EXACT_COUNT_MAX_CELLS = 200_000  # över detta uppskattas antalet i stället för att räknas exakt
+# Gridet är till för t.ex. en tomtkarta, inte för att bygga en egen höjdmodell av punkterna -
+# det finns bättre färdig höjddata för det (t.ex. laserdata). Varna när antalet blir stort.
+GRID_WARN_POINTS = 100
+PROFILE_TOLERANCE_M = 2.0
 TEST_POINT = (616919.8, 6728782.96)  # exempelpunkt ur Lantmäteriets tekniska beskrivning
 
 
@@ -247,6 +251,13 @@ class MarkhojdDock(QDockWidget):
         v.addWidget(self.btn_fetch_line)
         v.addWidget(self.progress_line)
         v.addWidget(self.btn_cancel_line)
+        self.btn_show_profile = QPushButton("Visa profil")
+        self.btn_show_profile.setToolTip(
+            "Visar avstånd och höjd som en graf i en egen panel i QGIS, byggd på det senast hämtade linjelagret."
+        )
+        self.btn_show_profile.setEnabled(False)
+        self.btn_show_profile.clicked.connect(self.show_profile)
+        v.addWidget(self.btn_show_profile)
         lay.addWidget(g)
 
         # Spara
@@ -417,6 +428,7 @@ class MarkhojdDock(QDockWidget):
     def _update_info(self, *_):
         if not self.geom or self.geom.isEmpty():
             self.info.setText("Inget område valt.")
+            self.info.setStyleSheet("")
             self.btn_fetch.setEnabled(False)
             return
         area = self.geom.area()
@@ -430,6 +442,7 @@ class MarkhojdDock(QDockWidget):
             n, exact = core.estimate_grid(area, spacing)[0], False
         req = max(1, math.ceil(n / core.MAX_POINTS_PER_REQUEST)) if n else 0
         head = f"Yta {area / 10000:,.2f} ha: "
+        fetchable = 0 < n <= maxpts
         if exact:
             txt = head + f"{n:,} punkter i {req} anrop."
         elif n > maxpts and bb.area() / (spacing * spacing) <= EXACT_COUNT_MAX_CELLS:
@@ -438,8 +451,17 @@ class MarkhojdDock(QDockWidget):
             txt = head + f"ca {n:,} punkter i ca {req} anrop."
             if n > maxpts:
                 txt += " Över max; öka punktavståndet."
+        if fetchable and n > GRID_WARN_POINTS:
+            txt += (
+                " Ett så tätt grid ger sällan bättre underlag än färdig höjddata avsedd för "
+                "höjdmodeller (t.ex. laserdata) - gridet här är tänkt för t.ex. en tomtkarta. "
+                "Överväg ett glesare punktavstånd."
+            )
+            self.info.setStyleSheet("color: #b45f06;")
+        else:
+            self.info.setStyleSheet("")
         self.info.setText(txt.replace(",", " "))
-        self.btn_fetch.setEnabled(0 < n <= maxpts and not self._running)
+        self.btn_fetch.setEnabled(fetchable and not self._running)
 
     def auto_spacing(self):
         if self.geom:
@@ -460,6 +482,7 @@ class MarkhojdDock(QDockWidget):
             QgsCoordinateTransform(self.canvas.mapSettings().destinationCrs(), CRS_3006, QgsProject.instance())
         )
         self.btn_line.setChecked(False)
+        self.btn_show_profile.setEnabled(False)
         self._update_line_info()
 
     def use_selected_line(self):
@@ -487,11 +510,13 @@ class MarkhojdDock(QDockWidget):
         self.line_geom = geom
         self.line_tool.reset()
         self.line_tool.band.setToGeometry(geom, CRS_3006)
+        self.btn_show_profile.setEnabled(False)
         self._update_line_info()
 
     def clear_line(self):
         self.line_geom = None
         self.line_tool.reset()
+        self.btn_show_profile.setEnabled(False)
         self._update_line_info()
 
     def _update_line_info(self, *_):
@@ -610,10 +635,51 @@ class MarkhojdDock(QDockWidget):
             text += " – avbrutet"
         self.msg(text + ".", Qgis.Warning if (failed or self._cancel) else Qgis.Success)
         self.save_layer.setLayer(self._layer)
+        is_line = update_info == self._update_line_info
+        if is_line and n > 0:
+            self._last_line_layer = self._layer
+            self.btn_show_profile.setEnabled(True)
         update_info()
         # den andra hämtningsknappen kan ha blivit avstängd av _running; uppdatera båda
-        other = self._update_line_info if update_info is self._update_info else self._update_info
+        other = self._update_line_info if is_line else self._update_info
         other()
+
+    # ------------------------------------------------------ profil
+    def show_profile(self):
+        """Visar avstånd/höjd för det senast hämtade linjelagret som en graf (frivilligt, inte standard)."""
+        layer = getattr(self, "_last_line_layer", None)
+        if not layer or not self.line_geom:
+            self.msg("Hämta höjder längs en linje först.", Qgis.Warning)
+            return
+        elev = layer.elevationProperties()
+        elev.setDefaultsFromLayer(layer)
+        elev.setCustomToleranceEnabled(True)
+        elev.setCustomTolerance(max(PROFILE_TOLERANCE_M, self.line_spacing.value() / 2))
+        elev.setType(Qgis.VectorProfileType.ContinuousSurface)
+        canvas = self._ensure_profile_canvas()
+        canvas.setLayers([layer])
+        canvas.setCrs(CRS_3006)
+        canvas.setProfileCurve(self.line_geom.constGet().clone())
+        canvas.refresh()
+        QTimer.singleShot(1200, canvas.zoomFull)
+        self._profile_dock.show()
+        self._profile_dock.raise_()
+
+    def _ensure_profile_canvas(self):
+        if getattr(self, "_profile_dock", None) is None:
+            canvas = QgsElevationProfileCanvas(self.iface.mainWindow())
+            canvas.setProject(QgsProject.instance())
+            self._profile_dock = QDockWidget("Höjdprofil – Markhöjd direkt", self.iface.mainWindow())
+            self._profile_dock.setWidget(canvas)
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self._profile_dock)
+        return self._profile_dock.widget()
+
+    def cleanup(self):
+        """Kallas när pluginet avaktiveras, så profilpanelen inte blir kvar övergiven."""
+        if getattr(self, "_profile_dock", None) is not None:
+            self.iface.removeDockWidget(self._profile_dock)
+            self._profile_dock.deleteLater()
+            self._profile_dock = None
 
     # -------------------------------------------------------- save
     def save(self):

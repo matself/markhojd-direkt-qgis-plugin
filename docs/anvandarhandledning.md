@@ -84,6 +84,11 @@ Panelen visar hela tiden yta, exakt antal punkter och antal anrop, till exempel
 *"Yta 0.36 ha: 49 punkter i 1 anrop."* Är antalet större än maxgränsen blir knappen
 **Hämta höjder** avstängd tills du ökar punktavståndet eller maxgränsen.
 
+Gridet är tänkt för att ta fram höjdvärden att redovisa på en karta, till exempel en tomtkarta, inte för
+att i efterhand bygga en egen höjdmodell av punkterna. För det finns redan färdig höjddata som är bättre
+lämpad, till exempel laserdata. Blir antalet punkter fler än 100 visar panelen därför en varningstext i
+orange och föreslår ett glesare punktavstånd. Det stoppar inte hämtningen, det är bara en påminnelse.
+
 **Anpassa punktavstånd till max antal** räknar ut det tätaste avståndet (hela meter) som ryms inom maxgränsen.
 
 Tumregler:
@@ -137,6 +142,15 @@ Samma **Max antal punkter** som gridet använder som skydd mot att hämta för m
 
 Klicka **Hämta höjder längs linjen** för att starta. Precis som för gridet visas en förloppsindikator som
 kan avbrytas, och resultatet läggs i ett nytt lager, till exempel **Markhöjd – linje 10 m**.
+
+### Visa profil
+
+Efter en lyckad hämtning aktiveras knappen **Visa profil**. Den är frivillig och inget som visas automatiskt.
+Den öppnar en egen panel i QGIS, dockad längst ned, med avstånd på ena axeln och höjd på den andra, byggd med
+QGIS egen inbyggda komponent för höjdprofiler (samma som ligger bakom *Visa → Höjdprofil*). Panelen ligger kvar
+tills du stänger den, och uppdateras om du klickar **Visa profil** igen efter en ny hämtning. Rensar eller byter
+du linje stängs knappen av tills en ny hämtning har gjorts, så att profilen inte visar en linje som inte
+längre stämmer med de hämtade punkterna.
 
 ## 8. Spara som 3D-punkter
 

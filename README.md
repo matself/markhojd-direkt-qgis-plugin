@@ -16,7 +16,9 @@ Fullständig beskrivning finns i [användarhandledningen](docs/anvandarhandledni
 2. **Höjdgrid i ett område** – rita en polygon (eller använd markerade polygoner i ett lager), välj punktavstånd och
    klicka *Hämta höjder*. Pluginet lägger ett regelbundet grid i området och hämtar höjden i varje gridpunkt.
 3. **Höjder längs en linje** – rita en linje, eller använd ett befintligt linjeobjekt, och ange punktavstånd. Punkterna
-   hämtas i ordning från linjens början till slut och får ett attribut `avstand`, lämpligt för en höjdprofil.
+   hämtas i ordning från linjens början till slut och får ett attribut `avstand`, lämpligt för en höjdprofil. En
+   MultiLineString slås automatiskt ihop och riktningen ensas. Knappen *Visa profil* kan sedan visa avstånd/höjd
+   som en graf i en egen panel i QGIS, om man vill det.
 4. **3D-punkter** – alla resultat är lager av typen PointZ i SWEREF 99 TM (EPSG:3006) med höjden som Z-värde och som
    attributet `hojd`. Spara som GeoPackage, Shapefile eller CSV (X,Y,Z).
 
