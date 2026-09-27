@@ -473,6 +473,17 @@ class MarkhojdDock(QDockWidget):
             return
         geom = QgsGeometry(feats[0].geometry())
         geom.transform(QgsCoordinateTransform(layer.crs(), CRS_3006, QgsProject.instance()))
+        if geom.isMultipart():
+            merged = geom.mergeLines()
+            if merged.isMultipart():
+                self.msg(
+                    "Linjen har osammanhängande delar (en lucka) och kan inte användas för en "
+                    "sammanhängande höjdprofil. Välj en sammanhängande linje.",
+                    Qgis.Warning,
+                    10,
+                )
+                return
+            geom = merged  # delarna hopkopplade och riktningen ensad
         self.line_geom = geom
         self.line_tool.reset()
         self.line_tool.band.setToGeometry(geom, CRS_3006)
@@ -506,7 +517,11 @@ class MarkhojdDock(QDockWidget):
         if not c or not self.line_geom:
             return
         spacing = self.line_spacing.value()
-        pts = line_points(self.line_geom, spacing, limit=self.maxpts.value())
+        try:
+            pts = line_points(self.line_geom, spacing, limit=self.maxpts.value())
+        except ValueError as e:
+            self.msg(str(e), Qgis.Warning, 10)
+            return
         if pts is None:
             self._update_line_info()
             return

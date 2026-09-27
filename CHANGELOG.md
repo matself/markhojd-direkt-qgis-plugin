@@ -1,5 +1,8 @@
 # Ändringslogg
 
+## 0.1.4
+- En MultiLineString (flera linjedelar, blandad ordning/riktning) slås automatiskt ihop till en sammanhängande linje för höjder längs en linje. En verkligt osammanhängande linje (lucka) avvisas med ett tydligt meddelande i stället för att ge felaktiga avstånd.
+
 ## 0.1.3
 - Nytt läge: höjder längs en linje, med rita-linje-verktyg eller befintligt linjeobjekt. Punkterna får ett attribut avstand (meter från linjens början), lämpligt för en höjdprofil.
 

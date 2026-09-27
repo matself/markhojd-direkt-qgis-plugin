@@ -33,3 +33,33 @@ def test_line_points_limit():
         [__import__("qgis.core", fromlist=["QgsPointXY"]).QgsPointXY(x, 0) for x in (0, 1000)]
     )
     assert line_points(geom, 1, limit=50) is None
+
+
+def test_multilinestring_mixed_order_and_direction_is_merged():
+    from qgis.core import QgsPointXY
+
+    seg1 = [QgsPointXY(0, 0), QgsPointXY(10, 0)]
+    seg2 = [QgsPointXY(30, 0), QgsPointXY(20, 0)]  # omvänd riktning
+    seg3 = [QgsPointXY(20, 0), QgsPointXY(10, 0)]  # kopplar ihop seg1 och seg2, omvänd riktning
+    geom = QgsGeometry.fromMultiPolylineXY([seg2, seg3, seg1])  # blandad ordning
+    pts = line_points(geom, 10)
+    # mergeLines() väljer själv vilken ände som blir start; det viktiga är att punkterna
+    # ligger i en enda konsekvent riktning längs den sammanhängande linjen, jämnt fördelade.
+    xs = [p[0] for p in pts]
+    assert {p[1] for p in pts} == {0}
+    assert sorted(xs) == [0, 10, 20, 30]
+    assert xs == sorted(xs) or xs == sorted(xs, reverse=True)
+    assert [p[2] for p in pts] == [0, 10, 20, 30]
+
+
+def test_multilinestring_with_gap_raises():
+    from qgis.core import QgsPointXY
+
+    seg1 = [QgsPointXY(0, 0), QgsPointXY(10, 0)]
+    seg2 = [QgsPointXY(20, 0), QgsPointXY(30, 0)]  # lucka mellan 10 och 20
+    geom = QgsGeometry.fromMultiPolylineXY([seg1, seg2])
+    try:
+        line_points(geom, 10)
+        assert False, "skulle ha höjt ValueError"
+    except ValueError:
+        pass

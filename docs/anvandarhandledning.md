@@ -125,6 +125,11 @@ Linjen väljs på samma sätt som området för gridet: **Rita linje** låter di
 Till skillnad från gridet, där flera markerade polygoner kan slås ihop, måste exakt en linje vara markerad
 i det aktiva lagret, eftersom ordningen längs linjen annars blir tvetydig. **Rensa** tar bort den valda linjen.
 
+Ett linjeobjekt som består av flera delar (en MultiLineString), till exempel digitaliserat i flera bitar
+eller i blandad riktning, slås automatiskt ihop till en enda sammanhängande linje och får en ensad riktning.
+Hänger delarna faktiskt inte ihop, det vill säga att det finns en lucka i geometrin, avvisas linjen i stället
+med ett meddelande, eftersom avstånd och punkter annars tyst skulle hoppa över luckan.
+
 **Punktavstånd** anger hur tätt punkterna ska ligga, i meter. Första punkten hamnar alltid vid linjens
 början och den sista alltid vid linjens slut, även om slutet inte råkar ligga jämnt på punktavståndet.
 Panelen visar linjens längd och exakt antal punkter, till exempel "Linjelängd 184.4 m: 9 punkter i 1 anrop."
