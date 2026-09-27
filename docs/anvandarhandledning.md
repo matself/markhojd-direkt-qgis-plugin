@@ -89,7 +89,10 @@ att i efterhand bygga en egen höjdmodell av punkterna. För det finns redan fä
 lämpad, till exempel laserdata. Blir antalet punkter fler än 100 visar panelen därför en varningstext i
 orange och föreslår ett glesare punktavstånd. Det stoppar inte hämtningen, det är bara en påminnelse.
 
-**Anpassa punktavstånd till max antal** räknar ut det tätaste avståndet (hela meter) som ryms inom maxgränsen.
+**Anpassa punktavstånd (ca 100 punkter)** räknar ut ett punktavstånd (hela meter) för en rimlig mängd
+punkter på en karta, inte det tätaste möjliga inom **Max antal punkter**. Den senare är bara en skyddsspärr
+mot att råka beställa en mycket stor mängd, inte ett mål att sikta mot; är den satt lägre än 100 används
+den i stället.
 
 Tumregler:
 

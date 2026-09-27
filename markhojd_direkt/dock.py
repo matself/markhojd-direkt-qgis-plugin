@@ -191,7 +191,11 @@ class MarkhojdDock(QDockWidget):
         self.spacing.valueChanged.connect(self._update_info)
         self.maxpts.valueChanged.connect(self._update_info)
         self.maxpts.valueChanged.connect(self._update_line_info)
-        b_auto = QPushButton("Anpassa punktavstånd till max antal")
+        b_auto = QPushButton(f"Anpassa punktavstånd (ca {GRID_WARN_POINTS} punkter)")
+        b_auto.setToolTip(
+            "Föreslår ett punktavstånd för en rimlig mängd punkter på en karta, inte flest möjliga "
+            "inom Max antal punkter, som bara är en skyddsspärr."
+        )
         b_auto.clicked.connect(self.auto_spacing)
         f.addRow("Punktavstånd", self.spacing)
         f.addRow("Max antal punkter", self.maxpts)
@@ -464,8 +468,13 @@ class MarkhojdDock(QDockWidget):
         self.btn_fetch.setEnabled(fetchable and not self._running)
 
     def auto_spacing(self):
+        """Föreslår punktavstånd för ca ``GRID_WARN_POINTS`` punkter, inte för flest möjliga
+        inom ``maxpts`` - gridet är tänkt för en rimlig mängd punkter på en karta, inte ett
+        tätt underlag för en egen höjdmodell. ``maxpts`` är en ren skyddsspärr och används bara
+        om den råkar vara satt lägre än målet."""
         if self.geom:
-            self.spacing.setValue(core.spacing_for_max_points(self.geom.area(), self.maxpts.value()))
+            target = min(GRID_WARN_POINTS, self.maxpts.value())
+            self.spacing.setValue(core.spacing_for_max_points(self.geom.area(), target))
 
     # ------------------------------------------------------- linje
     def toggle_line_tool(self, on):

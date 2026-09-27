@@ -1,5 +1,8 @@
 # Ändringslogg
 
+## 0.1.6
+- Anpassa punktavstånd siktar nu mot ca 100 punkter (samma gräns som varningstexten), inte mot Max antal punkter. Max antal punkter är bara en skyddsspärr och används som mål enbart om den är satt lägre.
+
 ## 0.1.5
 - Gridet varnar (orange text) när antalet punkter blir fler än 100, med förslag att öka punktavståndet - gridet är tänkt för t.ex. en tomtkarta, inte för att bygga en egen höjdmodell av punkterna.
 - Ny, frivillig knapp Visa profil för en hämtad linje: öppnar en panel i QGIS med avstånd/höjd som en graf, byggd på QGIS egen höjdprofilkomponent. Visas inte automatiskt.
