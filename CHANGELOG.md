@@ -1,5 +1,8 @@
 # Ändringslogg
 
+## 0.1.3
+- Nytt läge: höjder längs en linje, med rita-linje-verktyg eller befintligt linjeobjekt. Punkterna får ett attribut avstand (meter från linjens början), lämpligt för en höjdprofil.
+
 ## 0.1.2
 - Installation via plugin-arkiv (plugins.xml) och uppdaterad README.
 

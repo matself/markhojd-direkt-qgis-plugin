@@ -38,3 +38,11 @@ def test_fault_text():
 def test_estimates():
     assert core.estimate_grid(1_000_000, 10) == (10000, 10)
     assert core.spacing_for_max_points(1_000_000, 10000) == 10
+
+
+def test_chunk_sequential_preserves_order():
+    pts = [(i, i, i * 2) for i in range(2500)]
+    chunks = core.chunk_sequential(pts, max_points=1000)
+    assert [len(c) for c in chunks] == [1000, 1000, 500]
+    flat = [p for c in chunks for p in c]
+    assert flat == pts

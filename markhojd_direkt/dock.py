@@ -44,7 +44,8 @@ from qgis.PyQt.QtWidgets import (
 from . import core, layers
 from .client import MarkhojdClient, MarkhojdError
 from .grid import grid_points
-from .map_tools import ClickTool, PolygonTool
+from .line import line_points
+from .map_tools import ClickTool, LineTool, PolygonTool
 
 CRS_3006 = QgsCoordinateReferenceSystem("EPSG:3006")
 SETTINGS = "markhojd_direkt/"
@@ -94,6 +95,7 @@ class MarkhojdDock(QDockWidget):
         self.iface = iface
         self.canvas = iface.mapCanvas()
         self.geom = None  # område i EPSG:3006
+        self.line_geom = None  # linje i EPSG:3006
         self._cancel = False
         self._running = False
 
@@ -101,12 +103,15 @@ class MarkhojdDock(QDockWidget):
         self.click_tool.clicked.connect(self.on_click)
         self.poly_tool = PolygonTool(self.canvas)
         self.poly_tool.finished.connect(self.on_polygon)
+        self.line_tool = LineTool(self.canvas)
+        self.line_tool.finished.connect(self.on_line)
 
         self._loading = True
         self._build_ui()
         self._load_settings()
         self._loading = False
         self._update_info()
+        self._update_line_info()
 
     # ---------------------------------------------------------------- UI
     def _build_ui(self):
@@ -181,6 +186,7 @@ class MarkhojdDock(QDockWidget):
         self.maxpts.setSingleStep(1000)
         self.spacing.valueChanged.connect(self._update_info)
         self.maxpts.valueChanged.connect(self._update_info)
+        self.maxpts.valueChanged.connect(self._update_line_info)
         b_auto = QPushButton("Anpassa punktavstånd till max antal")
         b_auto.clicked.connect(self.auto_spacing)
         f.addRow("Punktavstånd", self.spacing)
@@ -200,6 +206,47 @@ class MarkhojdDock(QDockWidget):
         v.addWidget(self.btn_fetch)
         v.addWidget(self.progress)
         v.addWidget(self.btn_cancel)
+        lay.addWidget(g)
+
+        # Linje
+        g = QGroupBox("Höjder längs en linje")
+        v = QVBoxLayout(g)
+        row = QHBoxLayout()
+        self.btn_line = QPushButton("Rita linje")
+        self.btn_line.setCheckable(True)
+        self.btn_line.toggled.connect(self.toggle_line_tool)
+        b_line_sel = QPushButton("Markerad linje")
+        b_line_sel.setToolTip("Använd en markerad linje i aktivt lager")
+        b_line_sel.clicked.connect(self.use_selected_line)
+        b_line_clear = QPushButton("Rensa")
+        b_line_clear.clicked.connect(self.clear_line)
+        for b in (self.btn_line, b_line_sel, b_line_clear):
+            row.addWidget(b)
+        v.addLayout(row)
+        hint = QLabel("Vänsterklick = punkt, högerklick/Enter = klar, Esc = börja om.")
+        hint.setWordWrap(True)
+        v.addWidget(hint)
+        f = QFormLayout()
+        self.line_spacing = QDoubleSpinBox()
+        self.line_spacing.setRange(0.5, 5000)
+        self.line_spacing.setDecimals(1)
+        self.line_spacing.setSuffix(" m")
+        self.line_spacing.valueChanged.connect(self._update_line_info)
+        f.addRow("Punktavstånd", self.line_spacing)
+        v.addLayout(f)
+        self.line_info = QLabel()
+        self.line_info.setWordWrap(True)
+        v.addWidget(self.line_info)
+        self.btn_fetch_line = QPushButton("Hämta höjder längs linjen")
+        self.btn_fetch_line.clicked.connect(self.fetch_line)
+        self.btn_cancel_line = QPushButton("Avbryt")
+        self.btn_cancel_line.setVisible(False)
+        self.btn_cancel_line.clicked.connect(self._on_cancel)
+        self.progress_line = QProgressBar()
+        self.progress_line.setVisible(False)
+        v.addWidget(self.btn_fetch_line)
+        v.addWidget(self.progress_line)
+        v.addWidget(self.btn_cancel_line)
         lay.addWidget(g)
 
         # Spara
@@ -236,6 +283,7 @@ class MarkhojdDock(QDockWidget):
         self.decimals.setValue(int(s.value(SETTINGS + "decimals", 1)))
         self.spacing.setValue(float(s.value(SETTINGS + "spacing", 10)))
         self.maxpts.setValue(int(s.value(SETTINGS + "maxpts", 20000)))
+        self.line_spacing.setValue(float(s.value(SETTINGS + "line_spacing", 10)))
 
     def _save_settings(self):
         s = QgsSettings()
@@ -246,6 +294,7 @@ class MarkhojdDock(QDockWidget):
         s.setValue(SETTINGS + "decimals", self.decimals.value())
         s.setValue(SETTINGS + "spacing", self.spacing.value())
         s.setValue(SETTINGS + "maxpts", self.maxpts.value())
+        s.setValue(SETTINGS + "line_spacing", self.line_spacing.value())
 
     def _style_changed(self, *_):
         if self._loading:
@@ -261,6 +310,7 @@ class MarkhojdDock(QDockWidget):
         self._save_settings()
         self.btn_click.setChecked(False)
         self.btn_draw.setChecked(False)
+        self.btn_line.setChecked(False)
         super().closeEvent(event)
 
     # ------------------------------------------------------ helpers
@@ -292,10 +342,15 @@ class MarkhojdDock(QDockWidget):
         except MarkhojdError as e:
             self.msg(str(e), Qgis.Critical, 12)
 
+    def _uncheck_tools(self, keep=None):
+        for b in (self.btn_click, self.btn_draw, self.btn_line):
+            if b is not keep:
+                b.setChecked(False)
+
     # ---------------------------------------------------- click tool
     def toggle_click_tool(self, on):
         if on:
-            self.btn_draw.setChecked(False)
+            self._uncheck_tools(keep=self.btn_click)
             self.canvas.setMapTool(self.click_tool)
         elif self.canvas.mapTool() is self.click_tool:
             self.canvas.unsetMapTool(self.click_tool)
@@ -324,7 +379,7 @@ class MarkhojdDock(QDockWidget):
     # ------------------------------------------------------- area
     def toggle_poly_tool(self, on):
         if on:
-            self.btn_click.setChecked(False)
+            self._uncheck_tools(keep=self.btn_draw)
             self.poly_tool.reset()
             self.canvas.setMapTool(self.poly_tool)
         elif self.canvas.mapTool() is self.poly_tool:
@@ -390,6 +445,83 @@ class MarkhojdDock(QDockWidget):
         if self.geom:
             self.spacing.setValue(core.spacing_for_max_points(self.geom.area(), self.maxpts.value()))
 
+    # ------------------------------------------------------- linje
+    def toggle_line_tool(self, on):
+        if on:
+            self._uncheck_tools(keep=self.btn_line)
+            self.line_tool.reset()
+            self.canvas.setMapTool(self.line_tool)
+        elif self.canvas.mapTool() is self.line_tool:
+            self.canvas.unsetMapTool(self.line_tool)
+
+    def on_line(self, geom):
+        self.line_geom = QgsGeometry(geom)
+        self.line_geom.transform(
+            QgsCoordinateTransform(self.canvas.mapSettings().destinationCrs(), CRS_3006, QgsProject.instance())
+        )
+        self.btn_line.setChecked(False)
+        self._update_line_info()
+
+    def use_selected_line(self):
+        layer = self.iface.activeLayer()
+        if not isinstance(layer, QgsVectorLayer) or layer.geometryType() != QgsWkbTypes.LineGeometry:
+            self.msg("Markera ett linjelager som aktivt lager.", Qgis.Warning)
+            return
+        feats = layer.selectedFeatures()
+        if len(feats) != 1:
+            self.msg("Markera exakt en linje i det aktiva lagret.", Qgis.Warning)
+            return
+        geom = QgsGeometry(feats[0].geometry())
+        geom.transform(QgsCoordinateTransform(layer.crs(), CRS_3006, QgsProject.instance()))
+        self.line_geom = geom
+        self.line_tool.reset()
+        self.line_tool.band.setToGeometry(geom, CRS_3006)
+        self._update_line_info()
+
+    def clear_line(self):
+        self.line_geom = None
+        self.line_tool.reset()
+        self._update_line_info()
+
+    def _update_line_info(self, *_):
+        if not self.line_geom or self.line_geom.isEmpty():
+            self.line_info.setText("Ingen linje vald.")
+            self.btn_fetch_line.setEnabled(False)
+            return
+        length = self.line_geom.length()
+        spacing, maxpts = self.line_spacing.value(), self.maxpts.value()
+        n_steps = int(length // spacing) if spacing > 0 else 0
+        n = n_steps + 1
+        if length - n_steps * spacing > 1e-6:
+            n += 1
+        req = max(1, math.ceil(n / core.MAX_POINTS_PER_REQUEST)) if n else 0
+        txt = f"Linjelängd {length:,.1f} m: {n:,} punkter i {req} anrop.".replace(",", " ")
+        if n > maxpts:
+            txt += f" Över max ({maxpts:,}); öka punktavståndet.".replace(",", " ")
+        self.line_info.setText(txt)
+        self.btn_fetch_line.setEnabled(0 < n <= maxpts and not self._running)
+
+    def fetch_line(self):
+        c = self.client()
+        if not c or not self.line_geom:
+            return
+        spacing = self.line_spacing.value()
+        pts = line_points(self.line_geom, spacing, limit=self.maxpts.value())
+        if pts is None:
+            self._update_line_info()
+            return
+        if not pts:
+            self.msg("Inga punkter på linjen – kontrollera geometrin.", Qgis.Warning)
+            return
+        layer = layers.new_layer(f"Markhöjd – linje {spacing:g} m", extra_fields=[("avstand", "double")])
+        self._start_fetch(
+            core.chunk_sequential(pts),
+            layer,
+            len(pts),
+            c,
+            (self.btn_fetch_line, self.progress_line, self.btn_cancel_line, self._update_line_info),
+        )
+
     # ------------------------------------------------------- fetch
     def _on_cancel(self):
         self._cancel = True
@@ -406,41 +538,54 @@ class MarkhojdDock(QDockWidget):
         if not pts:
             self.msg("Inga gridpunkter föll inom området – minska punktavståndet.", Qgis.Warning)
             return
-        self._chunks = core.chunk_points(pts)
-        self._layer = layers.new_layer(f"Markhöjd – grid {spacing:g} m")
-        QgsProject.instance().addMapLayer(self._layer)
+        layer = layers.new_layer(f"Markhöjd – grid {spacing:g} m")
+        self._start_fetch(
+            core.chunk_points(pts), layer, len(pts), c, (self.btn_fetch, self.progress, self.btn_cancel, self._update_info)
+        )
+
+    def _start_fetch(self, chunks, layer, total, client, widgets):
+        QgsProject.instance().addMapLayer(layer)
+        self._chunks = chunks
+        self._layer = layer
         self._done = 0
-        self._total = len(pts)
-        self._client = c
+        self._total = total
+        self._client = client
         self._nodata = 0
         self._cancel = False
         self._running = True
-        self.btn_fetch.setEnabled(False)
-        self.btn_cancel.setVisible(True)
-        self.progress.setRange(0, self._total)
-        self.progress.setValue(0)
-        self.progress.setVisible(True)
+        self._active_widgets = widgets
+        fetch_btn, progress, cancel_btn, _ = widgets
+        fetch_btn.setEnabled(False)
+        cancel_btn.setVisible(True)
+        progress.setRange(0, total)
+        progress.setValue(0)
+        progress.setVisible(True)
         QTimer.singleShot(0, self._step)
 
     def _step(self):
         if self._cancel or not self._chunks:
             return self._finish()
         chunk = self._chunks.pop(0)
+        coords = [(row[0], row[1]) for row in chunk]
         try:
-            res = self._client.get_heights(chunk)
+            res = self._client.get_heights(coords)
         except MarkhojdError as e:
             self.msg(str(e), Qgis.Critical, 15)
             return self._finish(failed=True)
+        extras = [row[2:] for row in chunk]
+        rows = [(r[0], r[1], r[2]) + tuple(extra) for r, extra in zip(res, extras)]
         self._nodata += sum(1 for r in res if r[2] is None)
-        layers.add_points(self._layer, res)
+        layers.add_points(self._layer, rows)
         self._done += len(chunk)
-        self.progress.setValue(self._done)
+        _, progress, _, _ = self._active_widgets
+        progress.setValue(self._done)
         QTimer.singleShot(0, self._step)
 
     def _finish(self, failed=False):
         self._running = False
-        self.btn_cancel.setVisible(False)
-        self.progress.setVisible(False)
+        fetch_btn, progress, cancel_btn, update_info = self._active_widgets
+        cancel_btn.setVisible(False)
+        progress.setVisible(False)
         n = self._layer.featureCount()
         self._style(self._layer)
         text = f"{n} höjdpunkter hämtade"
@@ -450,7 +595,10 @@ class MarkhojdDock(QDockWidget):
             text += " – avbrutet"
         self.msg(text + ".", Qgis.Warning if (failed or self._cancel) else Qgis.Success)
         self.save_layer.setLayer(self._layer)
-        self._update_info()
+        update_info()
+        # den andra hämtningsknappen kan ha blivit avstängd av _running; uppdatera båda
+        other = self._update_line_info if update_info is self._update_info else self._update_info
+        other()
 
     # -------------------------------------------------------- save
     def save(self):

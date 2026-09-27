@@ -11,6 +11,7 @@ nationella markhöjdmodellen med 1 m upplösning. Du kan:
 
 * klicka i kartan och få höjden markerad med ett kryss och ett höjdvärde,
 * rita ett område och hämta höjder i ett regelbundet grid,
+* rita en linje, eller använda ett befintligt linjeobjekt, och hämta höjder med jämnt intervall längs linjen,
 * spara resultatet som 3D-punkter.
 
 ## 2. Förutsättningar
@@ -112,10 +113,31 @@ slå på etiketter i lagrets egenskaper om du vill ha dem.
   kontots avtal. Vid HTTP 429 eller 503 väntar pluginet och försöker igen. Om du blir strypt kan du
   sänka **Max antal punkter**.
 
-## 7. Spara som 3D-punkter
+## 7. Höjder längs en linje
+
+Det här läget hämtar höjder med jämnt intervall längs en linje, till exempel för en höjdprofil längs en väg
+eller en ledning. Ordningen på punkterna följer linjen från start till slut, och varje punkt får ett attribut
+`avstand` som anger avståndet i meter från linjens början. Det gör att lagret kan användas direkt för att
+rita en profil, sorterat på `avstand`.
+
+Linjen väljs på samma sätt som området för gridet: **Rita linje** låter dig klicka ut punkter i kartan
+(högerklick eller Enter avslutar, Esc börjar om), och **Markerad linje** använder ett befintligt linjeobjekt.
+Till skillnad från gridet, där flera markerade polygoner kan slås ihop, måste exakt en linje vara markerad
+i det aktiva lagret, eftersom ordningen längs linjen annars blir tvetydig. **Rensa** tar bort den valda linjen.
+
+**Punktavstånd** anger hur tätt punkterna ska ligga, i meter. Första punkten hamnar alltid vid linjens
+början och den sista alltid vid linjens slut, även om slutet inte råkar ligga jämnt på punktavståndet.
+Panelen visar linjens längd och exakt antal punkter, till exempel "Linjelängd 184.4 m: 9 punkter i 1 anrop."
+Samma **Max antal punkter** som gridet använder som skydd mot att hämta för mycket av misstag.
+
+Klicka **Hämta höjder längs linjen** för att starta. Precis som för gridet visas en förloppsindikator som
+kan avbrytas, och resultatet läggs i ett nytt lager, till exempel **Markhöjd – linje 10 m**.
+
+## 8. Spara som 3D-punkter
 
 Alla lager som pluginet skapar är av typen **PointZ** i SWEREF 99 TM (EPSG:3006). Höjden ligger både som Z-värde i
-geometrin och som attributet `hojd`. Övriga attribut är `e` och `n` (koordinater).
+geometrin och som attributet `hojd`. Övriga attribut är `e` och `n` (koordinater), och för linjelager också
+`avstand` (avstånd i meter från linjens början).
 
 Lagren är tillfälliga (minneslager) tills du sparar dem:
 
@@ -127,7 +149,7 @@ Lagren är tillfälliga (minneslager) tills du sparar dem:
 
 Om du stänger projektet utan att spara försvinner minneslagren (QGIS varnar om detta).
 
-## 8. Felsökning
+## 9. Felsökning
 
 | Meddelande | Trolig orsak och åtgärd |
 |---|---|
@@ -141,7 +163,7 @@ Om du stänger projektet utan att spara försvinner minneslagren (QGIS varnar om
 
 Felmeddelanden visas i QGIS meddelandefält. Vid felrapport, bifoga texten och gärna QGIS-versionen.
 
-## 9. Datainnehåll och noggrannhet
+## 10. Datainnehåll och noggrannhet
 
 * Källa: nationella markhöjdmodellen, grid med 1 m upplösning.
 * Plan: SWEREF 99 TM. Höjd: RH 2000.
@@ -149,7 +171,7 @@ Felmeddelanden visas i QGIS meddelandefält. Vid felrapport, bifoga texten och g
 * Kvalitet, tillkomst och uppdateringsfrekvens beskrivs av tjänstens leverantör i dokumentet
   *Kvalitetsbeskrivning nationell markhöjdmodell*. Kontrollera att kvaliteten räcker för ditt ändamål.
 
-## 10. Ansvarsfriskrivning
+## 11. Ansvarsfriskrivning
 
 Pluginet är ett fristående verktyg som tillhandahålls i befintligt skick, utan garantier.
 Det är inte utvecklat av, godkänt av eller kopplat till Lantmäteriet. Namnet *Lantmäteriet* används bara som

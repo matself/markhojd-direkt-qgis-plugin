@@ -33,6 +33,16 @@ def chunk_points(points, max_points=MAX_POINTS_PER_REQUEST, tile=TILE_SIZE_M):
     return chunks
 
 
+def chunk_sequential(points, max_points=MAX_POINTS_PER_REQUEST):
+    """Dela punkter i anrop om högst ``max_points`` punkter, utan att ändra ordningen.
+
+    Används för linjer, där ordningen behövs för att avståndet längs linjen ska stämma.
+    Ingen yt-baserad uppdelning behövs, eftersom tjänstens enda dokumenterade begränsning
+    för LineString/MultiLineString är antalet brytpunkter.
+    """
+    return [points[i : i + max_points] for i in range(0, len(points), max_points)]
+
+
 def build_multipoint_body(points):
     """JSON-kropp (bytes) för POST /hojd med en MultiPoint i SWEREF 99 TM."""
     body = {

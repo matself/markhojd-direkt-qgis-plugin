@@ -21,23 +21,28 @@ CLICK_LAYER_NAME = "Markhöjd – punkter"
 MAX_LABELED = 1000
 
 
-def new_layer(name):
-    layer = QgsVectorLayer(
-        "PointZ?crs=EPSG:3006&field=hojd:double&field=e:double&field=n:double", name, "memory"
-    )
+def new_layer(name, extra_fields=None):
+    """extra_fields: t.ex. [("avstand", "double")] för extra kolumner efter hojd/e/n."""
+    uri = "PointZ?crs=EPSG:3006&field=hojd:double&field=e:double&field=n:double"
+    for fname, ftype in extra_fields or []:
+        uri += f"&field={fname}:{ftype}"
+    layer = QgsVectorLayer(uri, name, "memory")
     layer.setCustomProperty(PROP, True)
     return layer
 
 
-def add_points(layer, heights):
-    """Lägg till (e, n, z) som 3D-punkter. Returnerar antal tillagda."""
+def add_points(layer, rows):
+    """Lägg till (e, n, z, *extra) som 3D-punkter. ``extra`` matchar lagrets extrafält.
+
+    Returnerar antal tillagda. Punkter med z=None (ingen höjddata) hoppas över.
+    """
     feats = []
-    for e, n, z in heights:
+    for e, n, z, *extra in rows:
         if z is None:
             continue
         f = QgsFeature(layer.fields())
         f.setGeometry(QgsGeometry(QgsPoint(e, n, z)))
-        f.setAttributes([round(z, 2), round(e, 3), round(n, 3)])
+        f.setAttributes([round(z, 2), round(e, 3), round(n, 3)] + [round(v, 2) for v in extra])
         feats.append(f)
     layer.dataProvider().addFeatures(feats)
     layer.updateExtents()
