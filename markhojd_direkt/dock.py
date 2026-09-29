@@ -94,7 +94,7 @@ class KeyDialog(QDialog):
 
 class MarkhojdDock(QDockWidget):
     def __init__(self, iface, parent=None):
-        super().__init__("Markhöjd direkt (Lantmäteriet)", parent)
+        super().__init__("Geodata: Markhöjd direkt (Lantmäteriet)", parent)
         self.setObjectName("MarkhojdDirektDock")
         self.iface = iface
         self.canvas = iface.mapCanvas()
@@ -330,7 +330,7 @@ class MarkhojdDock(QDockWidget):
 
     # ------------------------------------------------------ helpers
     def msg(self, text, level=Qgis.Info, duration=6):
-        self.iface.messageBar().pushMessage("Markhöjd direkt", text, level, duration)
+        self.iface.messageBar().pushMessage("Geodata: Markhöjd direkt", text, level, duration)
 
     def client(self):
         cfg = self.auth.configId()
@@ -678,7 +678,7 @@ class MarkhojdDock(QDockWidget):
         if getattr(self, "_profile_dock", None) is None:
             canvas = QgsElevationProfileCanvas(self.iface.mainWindow())
             canvas.setProject(QgsProject.instance())
-            self._profile_dock = QDockWidget("Höjdprofil – Markhöjd direkt", self.iface.mainWindow())
+            self._profile_dock = QDockWidget("Höjdprofil – Geodata: Markhöjd direkt", self.iface.mainWindow())
             self._profile_dock.setWidget(canvas)
             self.iface.addDockWidget(Qt.BottomDockWidgetArea, self._profile_dock)
         return self._profile_dock.widget()

@@ -6,7 +6,7 @@ from qgis.PyQt.QtWidgets import QAction
 
 from .dock import MarkhojdDock
 
-TITLE = "Markhöjd direkt (Lantmäteriet)"
+TITLE = "Geodata: Markhöjd direkt (Lantmäteriet)"
 
 
 class MarkhojdPlugin:
