@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugins>
-  <pyqgis_plugin name="Markhöjd direkt (Lantmäteriet)" version="0.1.6">
+  <pyqgis_plugin name="Geodata: Markhöjd direkt (Lantmäteriet)" version="0.1.7">
     <description><![CDATA[Hämta markhöjd från Lantmäteriets tjänst Markhöjd Direkt: klicka i kartan eller skapa ett höjdgrid i ett område.]]></description>
     <about><![CDATA[Klicka i kartan för att få markhöjden markerad med kryss och höjdvärde, eller rita ett område och hämta höjdpunkter i ett regelbundet grid. Punkterna skapas som 3D-punkter (PointZ, SWEREF 99 TM) och kan sparas till GeoPackage, Shapefile eller CSV. Kräver ett systemkonto (användarnamn/lösenord) som har beställt tjänsten Markhöjd Direkt hos Lantmäteriet. Pluginet är fristående och inte utvecklat av eller kopplat till Lantmäteriet; namnet används bara som källhänvisning.]]></about>
-    <version>0.1.6</version>
+    <version>0.1.7</version>
     <qgis_minimum_version>3.34</qgis_minimum_version>
     <homepage>https://github.com/matself/markhojd-direkt-qgis-plugin</homepage>
     <file_name>markhojd_direkt.zip</file_name>
     <icon>icon.svg</icon>
     <author_name><![CDATA[Mats Elfström]]></author_name>
-    <download_url>https://github.com/matself/markhojd-direkt-qgis-plugin/releases/download/v0.1.6/markhojd_direkt.zip</download_url>
+    <download_url>https://github.com/matself/markhojd-direkt-qgis-plugin/releases/download/v0.1.7/markhojd_direkt.zip</download_url>
     <uploaded_by><![CDATA[Mats Elfström]]></uploaded_by>
     <experimental>True</experimental>
     <deprecated>False</deprecated>
