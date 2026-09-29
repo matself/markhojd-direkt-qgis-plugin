@@ -1,4 +1,4 @@
-# Användarhandledning – Markhöjd direkt (Lantmäteriet)
+# Användarhandledning – Geodata: Markhöjd direkt (Lantmäteriet)
 
 > **Observera:** Pluginet är fristående och har inget samband med, och är inte godkänt eller
 > tillhandahållet av, Lantmäteriet. Namnet *Lantmäteriet* används endast för att ange varifrån
@@ -27,7 +27,7 @@ nationella markhöjdmodellen med 1 m upplösning. Du kan:
 2. I QGIS: *Plugins → Hantera och installera insticksmoduler → Installera från ZIP*.
 3. Välj filen och klicka *Installera insticksmodul*.
 4. Klicka på ikonen i verktygsfältet, eller välj pluginet i menyn *Plugins*, för att öppna panelen
-   **Markhöjd direkt (Lantmäteriet)**.
+   **Geodata: Markhöjd direkt (Lantmäteriet)**.
 
 ## 4. Anslutning
 

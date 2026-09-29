@@ -1,5 +1,8 @@
 # Ändringslogg
 
+## 0.1.7
+- Bytt namn till "Geodata: Markhöjd direkt (Lantmäteriet)" med ny ikon, del av ett gemensamt namn-/ikonschema för de fyra Lantmäteriet-pluginen.
+
 ## 0.1.6
 - Anpassa punktavstånd siktar nu mot ca 100 punkter (samma gräns som varningstexten), inte mot Max antal punkter. Max antal punkter är bara en skyddsspärr och används som mål enbart om den är satt lägre.
 

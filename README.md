@@ -1,4 +1,4 @@
-# Markhöjd direkt (Lantmäteriet) – QGIS-plugin
+# Geodata: Markhöjd direkt (Lantmäteriet) – QGIS-plugin
 
 > **Disclaimer:** Detta plugin är fristående och har inget samband med, och är inte godkänt eller
 > tillhandahållet av, Lantmäteriet. Namnet *Lantmäteriet* används endast för att ange källan till
