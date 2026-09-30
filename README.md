@@ -56,15 +56,9 @@ Tumregel: 1 ha ger 100 punkter vid 10 m, 10 000 punkter vid 1 m. Standard är 10
 
 ## Installation
 
-Öppna *Plugins → Hantera och installera insticksmoduler → Inställningar*, klicka *Lägg till…* och klistra in
-adressen nedan. Kryssa i *Visa även experimentella insticksmoduler* och installera pluginet under fliken *Alla*.
-
-```
-https://raw.githubusercontent.com/matself/markhojd-direkt-qgis-plugin/main/plugins.xml
-```
-
-Du kan också ladda ner `markhojd_direkt.zip` från [Releases](https://github.com/matself/markhojd-direkt-qgis-plugin/releases)
-och välja *Installera från ZIP*. Stegen för anslutning och användning finns i
+Ladda ner `markhojd_direkt.zip` från [Releases](https://github.com/matself/markhojd-direkt-qgis-plugin/releases)
+och välj *Plugins → Hantera och installera insticksmoduler → Installera från ZIP*.
+Stegen för anslutning och användning finns i
 [användarhandledningen](docs/anvandarhandledning.md).
 
 ## Utveckling
