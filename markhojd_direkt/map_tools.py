@@ -1,6 +1,6 @@
-"""Kartverktyg: klicka för höjd och rita polygon."""
+"""Map tools: click for height, draw polygon and draw line."""
 
-from qgis.core import QgsGeometry, QgsPointXY, QgsWkbTypes
+from qgis.core import Qgis, QgsGeometry, QgsPointXY
 from qgis.gui import QgsMapTool, QgsMapToolEmitPoint, QgsRubberBand
 from qgis.PyQt.QtCore import Qt, QTimer, pyqtSignal
 from qgis.PyQt.QtGui import QColor
@@ -11,25 +11,25 @@ class ClickTool(QgsMapToolEmitPoint):
 
     def __init__(self, canvas):
         super().__init__(canvas)
-        self.setCursor(Qt.CrossCursor)
+        self.setCursor(Qt.CursorShape.CrossCursor)
 
     def canvasReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             pt = self.toMapCoordinates(event.pos())
-            # nätverksanrop körs efter att händelsen hanterats klart
+            # the network request runs after the event has been fully handled
             QTimer.singleShot(0, lambda: self.clicked.emit(pt))
 
 
 class PolygonTool(QgsMapTool):
-    """Vänsterklick lägger till hörn, högerklick/dubbelklick avslutar, Esc avbryter."""
+    """Left click adds a vertex, right click/double click finishes, Esc cancels."""
 
     finished = pyqtSignal(QgsGeometry)
 
     def __init__(self, canvas):
         super().__init__(canvas)
-        self.setCursor(Qt.CrossCursor)
+        self.setCursor(Qt.CursorShape.CrossCursor)
         self.points = []
-        self.band = QgsRubberBand(canvas, QgsWkbTypes.PolygonGeometry)
+        self.band = QgsRubberBand(canvas, Qgis.GeometryType.Polygon)
         self._style(self.band)
 
     @staticmethod
@@ -40,31 +40,31 @@ class PolygonTool(QgsMapTool):
 
     def reset(self):
         self.points = []
-        self.band.reset(QgsWkbTypes.PolygonGeometry)
+        self.band.reset(Qgis.GeometryType.Polygon)
 
     def canvasMoveEvent(self, event):
         if self.points:
             self._draw(self.points + [self.toMapCoordinates(event.pos())])
 
     def canvasReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self.points.append(self.toMapCoordinates(event.pos()))
             self._draw(self.points)
-        elif event.button() == Qt.RightButton:
+        elif event.button() == Qt.MouseButton.RightButton:
             self._finish()
 
     def canvasDoubleClickEvent(self, event):
         self._finish()
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Escape:
+        if event.key() == Qt.Key.Key_Escape:
             self.reset()
             event.accept()
-        elif event.key() in (Qt.Key_Return, Qt.Key_Enter):
+        elif event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self._finish()
 
     def _draw(self, pts):
-        self.band.reset(QgsWkbTypes.PolygonGeometry)
+        self.band.reset(Qgis.GeometryType.Polygon)
         if len(pts) >= 2:
             self.band.setToGeometry(QgsGeometry.fromPolygonXY([pts]), None)
 
@@ -74,7 +74,7 @@ class PolygonTool(QgsMapTool):
         geom = QgsGeometry.fromPolygonXY([self.points])
         self._draw(self.points)
         self.points = []
-        self.finished.emit(geom)  # bandet blir kvar tills användaren rensar
+        self.finished.emit(geom)  # the rubber band stays until the user clears it
 
     def deactivate(self):
         self.points = []
@@ -82,45 +82,45 @@ class PolygonTool(QgsMapTool):
 
 
 class LineTool(QgsMapTool):
-    """Vänsterklick lägger till punkter, högerklick/dubbelklick avslutar, Esc avbryter."""
+    """Left click adds a point, right click/double click finishes, Esc cancels."""
 
     finished = pyqtSignal(QgsGeometry)
 
     def __init__(self, canvas):
         super().__init__(canvas)
-        self.setCursor(Qt.CrossCursor)
+        self.setCursor(Qt.CursorShape.CrossCursor)
         self.points = []
-        self.band = QgsRubberBand(canvas, QgsWkbTypes.LineGeometry)
+        self.band = QgsRubberBand(canvas, Qgis.GeometryType.Line)
         self.band.setColor(QColor(217, 79, 0, 200))
         self.band.setWidth(2)
 
     def reset(self):
         self.points = []
-        self.band.reset(QgsWkbTypes.LineGeometry)
+        self.band.reset(Qgis.GeometryType.Line)
 
     def canvasMoveEvent(self, event):
         if self.points:
             self._draw(self.points + [self.toMapCoordinates(event.pos())])
 
     def canvasReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self.points.append(self.toMapCoordinates(event.pos()))
             self._draw(self.points)
-        elif event.button() == Qt.RightButton:
+        elif event.button() == Qt.MouseButton.RightButton:
             self._finish()
 
     def canvasDoubleClickEvent(self, event):
         self._finish()
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Escape:
+        if event.key() == Qt.Key.Key_Escape:
             self.reset()
             event.accept()
-        elif event.key() in (Qt.Key_Return, Qt.Key_Enter):
+        elif event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self._finish()
 
     def _draw(self, pts):
-        self.band.reset(QgsWkbTypes.LineGeometry)
+        self.band.reset(Qgis.GeometryType.Line)
         if len(pts) >= 2:
             self.band.setToGeometry(QgsGeometry.fromPolylineXY(pts), None)
 
@@ -130,7 +130,7 @@ class LineTool(QgsMapTool):
         geom = QgsGeometry.fromPolylineXY(self.points)
         self._draw(self.points)
         self.points = []
-        self.finished.emit(geom)  # bandet blir kvar tills användaren rensar
+        self.finished.emit(geom)  # the rubber band stays until the user clears it
 
     def deactivate(self):
         self.points = []

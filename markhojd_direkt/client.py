@@ -1,9 +1,9 @@
-"""Klient mot Markhöjd Direkt (REST/JSON).
+"""Client for the Markhöjd Direkt service (REST/JSON).
 
-Tjänsten anropas med HTTP Basic (användarnamn/lösenord för systemkontot), på samma sätt som
-i HAJK. Uppgifterna läses ur QGIS autentiseringsdatabas och skickas som Authorization-header.
-QGIS egen nätverks- och autentiseringshantering undviks: den kraschade QGIS och öppnar
-inloggningsrutor vid 401.
+The service is called with HTTP Basic (username/password of the system account), the same way
+as in HAJK. The credentials are read from the QGIS authentication database and sent as an
+Authorization header. QGIS's own network and authentication handling is avoided: it crashed
+QGIS and opens login dialogs on 401.
 """
 
 import base64
@@ -28,14 +28,14 @@ class MarkhojdError(Exception):
 
 
 def _pause(seconds):
-    """Vänta utan att frysa gränssnittet."""
+    """Wait without freezing the user interface."""
     loop = QEventLoop()
     QTimer.singleShot(int(seconds * 1000), loop.quit)
     loop.exec()
 
 
 def load_credentials(authcfg):
-    """(användarnamn, lösenord) ur en autentiseringskonfiguration (Basic, eller nyckel/hemlighet ur OAuth2)."""
+    """(username, password) from an authentication configuration (Basic, or key/secret from OAuth2)."""
     cfg = QgsAuthMethodConfig()
     QgsApplication.authManager().loadAuthenticationConfig(authcfg, cfg, True)
     if not cfg.isValid():
@@ -88,7 +88,7 @@ class MarkhojdClient:
             if body is None:
                 reply = self._nam.get(req)
             else:
-                req.setHeader(QNetworkRequest.ContentTypeHeader, "application/json")
+                req.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader, "application/json")
                 reply = self._nam.post(req, body)
             loop = QEventLoop()
             reply.finished.connect(loop.quit)
@@ -98,17 +98,17 @@ class MarkhojdClient:
                 reply.abort()
             self._last = time.monotonic()
 
-            status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+            status = reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute)
             text = bytes(reply.readAll()).decode("utf-8", errors="replace")
             retry_after = bytes(reply.rawHeader(b"Retry-After")).decode()
-            net_error = reply.errorString() if reply.error() != QNetworkReply.NoError else ""
+            net_error = reply.errorString() if reply.error() != QNetworkReply.NetworkError.NoError else ""
             reply.deleteLater()
             if status == 200:
                 try:
                     return json.loads(text)
                 except ValueError as e:
                     raise MarkhojdError(f"Ogiltigt svar från tjänsten: {e}")
-            # Tjänsten strypt eller tillfälligt otillgänglig: vänta och försök igen
+            # Service throttled or temporarily unavailable: wait and retry
             if status in (429, 503) and attempt < MAX_RETRIES:
                 delay = float(retry_after) if retry_after.replace(".", "").isdigit() else 2.0 * attempt
                 _pause(min(delay, 60))
@@ -126,13 +126,13 @@ class MarkhojdClient:
         return bool(self._request("/health").get("up"))
 
     def get_height(self, e, n):
-        """Höjd (m) för en punkt i SWEREF 99 TM, eller None om data saknas."""
+        """Height (m) for a point in SWEREF 99 TM, or None if there is no data."""
         payload = self._request(f"/hojd?srid={core.SRID}&e={e:.3f}&n={n:.3f}")
         res = core.parse_heights(payload)
         return res[0][2] if res else None
 
     def get_heights(self, points):
-        """Höjder för högst 1 000 punkter (e, n) i ett anrop. Returnerar (e, n, z|None)."""
+        """Heights for at most 1000 points (e, n) in one request. Returns (e, n, z|None)."""
         if len(points) > core.MAX_POINTS_PER_REQUEST:
             raise ValueError("För många punkter i ett anrop")
         return core.parse_heights(self._request("/hojd", core.build_multipoint_body(points)))

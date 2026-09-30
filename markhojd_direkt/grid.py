@@ -1,4 +1,4 @@
-"""Gridgenerering inom en polygon (SWEREF 99 TM)."""
+"""Grid generation inside a polygon (SWEREF 99 TM)."""
 
 import math
 
@@ -6,10 +6,10 @@ from qgis.core import QgsGeometry, QgsPointXY
 
 
 def grid_points(geom: QgsGeometry, spacing: float, limit=None):
-    """Regelbundna punkter (e, n) med ``spacing`` m mellan sig inom polygonen.
+    """Regularly spaced points (e, n), ``spacing`` m apart, inside the polygon.
 
-    Gridet är förankrat i multiplar av ``spacing`` så att upprepade körningar
-    ger samma punkter. Avbryter och returnerar None om fler än ``limit`` punkter.
+    The grid is anchored at multiples of ``spacing`` so that repeated runs give the
+    same points. Stops and returns None if there are more than ``limit`` points.
     """
     engine = QgsGeometry.createGeometryEngine(geom.constGet())
     engine.prepareGeometry()

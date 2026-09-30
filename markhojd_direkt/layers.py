@@ -1,4 +1,4 @@
-"""Skapa och formatera punktlager (PointZ, SWEREF 99 TM)."""
+"""Create and style point layers (PointZ, SWEREF 99 TM)."""
 
 from qgis.core import (
     Qgis,
@@ -22,7 +22,7 @@ MAX_LABELED = 1000
 
 
 def new_layer(name, extra_fields=None):
-    """extra_fields: t.ex. [("avstand", "double")] för extra kolumner efter hojd/e/n."""
+    """extra_fields: e.g. [("avstand", "double")] for extra columns after hojd/e/n."""
     uri = "PointZ?crs=EPSG:3006&field=hojd:double&field=e:double&field=n:double"
     for fname, ftype in extra_fields or []:
         uri += f"&field={fname}:{ftype}"
@@ -32,9 +32,9 @@ def new_layer(name, extra_fields=None):
 
 
 def add_points(layer, rows):
-    """Lägg till (e, n, z, *extra) som 3D-punkter. ``extra`` matchar lagrets extrafält.
+    """Add (e, n, z, *extra) as 3D points. ``extra`` matches the layer's extra fields.
 
-    Returnerar antal tillagda. Punkter med z=None (ingen höjddata) hoppas över.
+    Returns the number added. Points with z=None (no height data) are skipped.
     """
     feats = []
     for e, n, z, *extra in rows:
@@ -51,7 +51,7 @@ def add_points(layer, rows):
 
 
 def style_layer(layer, font_family, font_size, decimals):
-    """Kryss som symbol och höjdvärdet som etikett."""
+    """Cross as symbol and the height value as label."""
     layer.setRenderer(
         QgsSingleSymbolRenderer(_cross_symbol())
     )
@@ -67,7 +67,7 @@ def style_layer(layer, font_family, font_size, decimals):
     s.isExpression = True
     s.placement = Qgis.LabelPlacement.OverPoint
     s.setFormat(fmt)
-    s.quadOffset = Qgis.LabelQuadrantPosition.Right  # texten till höger om punkten, vertikalt centrerad
+    s.quadOffset = Qgis.LabelQuadrantPosition.Right  # text to the right of the point, vertically centered
     s.xOffset = 1.5
     s.yOffset = 0
     s.dist = 0
@@ -77,7 +77,7 @@ def style_layer(layer, font_family, font_size, decimals):
 
 
 def _cross_symbol():
-    sl = QgsSimpleMarkerSymbolLayer(QgsSimpleMarkerSymbolLayer.Cross, 3.0)
+    sl = QgsSimpleMarkerSymbolLayer(Qgis.MarkerShape.Cross, 3.0)
     sl.setColor(QColor("#d94f00"))
     sl.setStrokeColor(QColor("#d94f00"))
     sl.setStrokeWidth(0.5)

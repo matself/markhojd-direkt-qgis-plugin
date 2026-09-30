@@ -1,18 +1,18 @@
-"""Punkter med jämnt intervall längs en linje (SWEREF 99 TM)."""
+"""Evenly spaced points along a line (SWEREF 99 TM)."""
 
 
 def line_points(geom, spacing, limit=None):
-    """Punkter (e, n, avstånd) med ``spacing`` m mellan sig längs linjen.
+    """Points (e, n, distance), ``spacing`` m apart, along the line.
 
-    Första punkten ligger vid avstånd 0 och sista alltid vid linjens slut, även om
-    slutet inte råkar ligga på ett jämnt multipel av ``spacing``. Avbryter och
-    returnerar None om fler än ``limit`` punkter skulle skapas.
+    The first point is at distance 0 and the last is always at the end of the line, even if
+    the end is not an even multiple of ``spacing``. Stops and returns None if more than
+    ``limit`` points would be created.
 
-    Är ``geom`` en MultiLineString (t.ex. flera markerade linjeobjekt eller en linje med
-    flera delar) slås delarna ihop och riktningen ensas med ``mergeLines()``, som kopplar
-    ihop delar oavsett i vilken ordning eller riktning de är lagrade. Hänger delarna inte
-    ihop (en lucka) skulle avstånd och interpolering annars tyst hoppa över luckan, så då
-    höjs ``ValueError`` i stället.
+    If ``geom`` is a MultiLineString (for example several selected line features or a line
+    with several parts) the parts are merged and the direction is unified with
+    ``mergeLines()``, which joins parts regardless of the order or direction they are stored
+    in. If the parts are not connected (a gap), distance and interpolation would silently
+    skip the gap, so ``ValueError`` is raised instead.
     """
     if geom.isMultipart():
         merged = geom.mergeLines()

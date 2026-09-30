@@ -1,4 +1,4 @@
-"""Panel och logik för Markhöjd direkt."""
+"""Panel and logic for Markhöjd direkt."""
 
 import math
 import os
@@ -10,12 +10,10 @@ from qgis.core import (
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
     QgsGeometry,
-    QgsMapLayerProxyModel,
     QgsProject,
     QgsSettings,
     QgsVectorFileWriter,
     QgsVectorLayer,
-    QgsWkbTypes,
 )
 from qgis.gui import QgsAuthConfigSelect, QgsElevationProfileCanvas, QgsMapLayerComboBox
 from qgis.PyQt.QtCore import Qt, QTimer
@@ -49,16 +47,17 @@ from .map_tools import ClickTool, LineTool, PolygonTool
 
 CRS_3006 = QgsCoordinateReferenceSystem("EPSG:3006")
 SETTINGS = "markhojd_direkt/"
-EXACT_COUNT_MAX_CELLS = 200_000  # över detta uppskattas antalet i stället för att räknas exakt
-# Gridet är till för t.ex. en tomtkarta, inte för att bygga en egen höjdmodell av punkterna -
-# det finns bättre färdig höjddata för det (t.ex. laserdata). Varna när antalet blir stort.
+EXACT_COUNT_MAX_CELLS = 200_000  # above this the count is estimated instead of computed exactly
+# The grid is meant for e.g. a plot map, not for building a custom elevation model from the
+# points; there is better ready-made elevation data for that (e.g. laser scanning data).
+# Warn when the number of points gets large.
 GRID_WARN_POINTS = 100
 PROFILE_TOLERANCE_M = 2.0
-TEST_POINT = (616919.8, 6728782.96)  # exempelpunkt ur Lantmäteriets tekniska beskrivning
+TEST_POINT = (616919.8, 6728782.96)  # example point from the technical description by Lantmäteriet
 
 
 class KeyDialog(QDialog):
-    """Sparar användarnamn/lösenord (Basic) i QGIS autentiseringsdatabas."""
+    """Stores username/password (Basic) in the QGIS authentication database."""
 
     def __init__(self, environment, parent=None):
         super().__init__(parent)
@@ -68,10 +67,10 @@ class KeyDialog(QDialog):
         form = QFormLayout(self)
         self.user = QLineEdit()
         self.password = QLineEdit()
-        self.password.setEchoMode(QLineEdit.Password)
+        self.password.setEchoMode(QLineEdit.EchoMode.Password)
         form.addRow("Användarnamn", self.user)
         form.addRow("Lösenord", self.password)
-        bb = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         bb.accepted.connect(self.accept)
         bb.rejected.connect(self.reject)
         form.addRow(bb)
@@ -98,8 +97,8 @@ class MarkhojdDock(QDockWidget):
         self.setObjectName("MarkhojdDirektDock")
         self.iface = iface
         self.canvas = iface.mapCanvas()
-        self.geom = None  # område i EPSG:3006
-        self.line_geom = None  # linje i EPSG:3006
+        self.geom = None  # area in EPSG:3006
+        self.line_geom = None  # line in EPSG:3006
         self._cancel = False
         self._running = False
 
@@ -122,7 +121,7 @@ class MarkhojdDock(QDockWidget):
         body = QWidget()
         lay = QVBoxLayout(body)
 
-        # Anslutning
+        # Connection
         g = QGroupBox("Anslutning")
         f = QFormLayout(g)
         self.env = QComboBox()
@@ -141,7 +140,7 @@ class MarkhojdDock(QDockWidget):
         f.addRow(row)
         lay.addWidget(g)
 
-        # Höjd i punkt
+        # Height at a point
         g = QGroupBox("Höjd i en punkt")
         f = QFormLayout(g)
         self.btn_click = QPushButton("Klicka i kartan för höjd")
@@ -216,7 +215,7 @@ class MarkhojdDock(QDockWidget):
         v.addWidget(self.btn_cancel)
         lay.addWidget(g)
 
-        # Linje
+        # Line
         g = QGroupBox("Höjder längs en linje")
         v = QVBoxLayout(g)
         row = QHBoxLayout()
@@ -264,11 +263,11 @@ class MarkhojdDock(QDockWidget):
         v.addWidget(self.btn_show_profile)
         lay.addWidget(g)
 
-        # Spara
+        # Save
         g = QGroupBox("Spara som 3D-punkter")
         v = QVBoxLayout(g)
         self.save_layer = QgsMapLayerComboBox()
-        self.save_layer.setFilters(QgsMapLayerProxyModel.PointLayer)
+        self.save_layer.setFilters(Qgis.LayerFilter.PointLayer)
         b_save = QPushButton("Spara lager…")
         b_save.clicked.connect(self.save)
         v.addWidget(self.save_layer)
@@ -329,13 +328,13 @@ class MarkhojdDock(QDockWidget):
         super().closeEvent(event)
 
     # ------------------------------------------------------ helpers
-    def msg(self, text, level=Qgis.Info, duration=6):
+    def msg(self, text, level=Qgis.MessageLevel.Info, duration=6):
         self.iface.messageBar().pushMessage("Geodata: Markhöjd direkt", text, level, duration)
 
     def client(self):
         cfg = self.auth.configId()
         if not cfg:
-            self.msg("Välj eller skapa en autentiseringskonfiguration först.", Qgis.Warning)
+            self.msg("Välj eller skapa en autentiseringskonfiguration först.", Qgis.MessageLevel.Warning)
             return None
         self._save_settings()
         return MarkhojdClient(cfg, self.env.currentData())
@@ -353,9 +352,9 @@ class MarkhojdDock(QDockWidget):
         try:
             up = c.health()
             z = c.get_height(*TEST_POINT)
-            self.msg(f"Tjänsten är {'uppe' if up else 'nere'}. Testpunkt: {z} m.", Qgis.Success)
+            self.msg(f"Tjänsten är {'uppe' if up else 'nere'}. Testpunkt: {z} m.", Qgis.MessageLevel.Success)
         except MarkhojdError as e:
-            self.msg(str(e), Qgis.Critical, 12)
+            self.msg(str(e), Qgis.MessageLevel.Critical, 12)
 
     def _uncheck_tools(self, keep=None):
         for b in (self.btn_click, self.btn_draw, self.btn_line):
@@ -379,10 +378,10 @@ class MarkhojdDock(QDockWidget):
         try:
             z = c.get_height(p.x(), p.y())
         except MarkhojdError as e:
-            self.msg(str(e), Qgis.Critical, 12)
+            self.msg(str(e), Qgis.MessageLevel.Critical, 12)
             return
         if z is None:
-            self.msg("Ingen höjddata för den punkten.", Qgis.Warning)
+            self.msg("Ingen höjddata för den punkten.", Qgis.MessageLevel.Warning)
             return
         layer = layers.find_click_layer()
         if layer is None:
@@ -410,12 +409,12 @@ class MarkhojdDock(QDockWidget):
 
     def use_selection(self):
         layer = self.iface.activeLayer()
-        if not isinstance(layer, QgsVectorLayer) or layer.geometryType() != QgsWkbTypes.PolygonGeometry:
-            self.msg("Markera ett polygonlager som aktivt lager.", Qgis.Warning)
+        if not isinstance(layer, QgsVectorLayer) or layer.geometryType() != Qgis.GeometryType.Polygon:
+            self.msg("Markera ett polygonlager som aktivt lager.", Qgis.MessageLevel.Warning)
             return
         feats = layer.selectedFeatures()
         if not feats:
-            self.msg("Inga polygoner är markerade i det aktiva lagret.", Qgis.Warning)
+            self.msg("Inga polygoner är markerade i det aktiva lagret.", Qgis.MessageLevel.Warning)
             return
         geom = QgsGeometry.unaryUnion([f.geometry() for f in feats])
         geom.transform(QgsCoordinateTransform(layer.crs(), CRS_3006, QgsProject.instance()))
@@ -440,7 +439,7 @@ class MarkhojdDock(QDockWidget):
         bb = self.geom.boundingBox()
         if bb.area() / (spacing * spacing) <= EXACT_COUNT_MAX_CELLS:
             pts = grid_points(self.geom, spacing, limit=maxpts)
-            n = maxpts + 1 if pts is None else len(pts)  # None = över maxgränsen
+            n = maxpts + 1 if pts is None else len(pts)  # None = over the maximum
             exact = pts is not None
         else:
             n, exact = core.estimate_grid(area, spacing)[0], False
@@ -468,15 +467,15 @@ class MarkhojdDock(QDockWidget):
         self.btn_fetch.setEnabled(fetchable and not self._running)
 
     def auto_spacing(self):
-        """Föreslår punktavstånd för ca ``GRID_WARN_POINTS`` punkter, inte för flest möjliga
-        inom ``maxpts`` - gridet är tänkt för en rimlig mängd punkter på en karta, inte ett
-        tätt underlag för en egen höjdmodell. ``maxpts`` är en ren skyddsspärr och används bara
-        om den råkar vara satt lägre än målet."""
+        """Suggest a point spacing for about ``GRID_WARN_POINTS`` points, not for as many as
+        possible within ``maxpts``. The grid is meant for a reasonable number of points on a
+        map, not a dense basis for a custom elevation model. ``maxpts`` is only a safeguard
+        and is used only if it happens to be set lower than the target."""
         if self.geom:
             target = min(GRID_WARN_POINTS, self.maxpts.value())
             self.spacing.setValue(core.spacing_for_max_points(self.geom.area(), target))
 
-    # ------------------------------------------------------- linje
+    # ------------------------------------------------------- line
     def toggle_line_tool(self, on):
         if on:
             self._uncheck_tools(keep=self.btn_line)
@@ -496,12 +495,12 @@ class MarkhojdDock(QDockWidget):
 
     def use_selected_line(self):
         layer = self.iface.activeLayer()
-        if not isinstance(layer, QgsVectorLayer) or layer.geometryType() != QgsWkbTypes.LineGeometry:
-            self.msg("Markera ett linjelager som aktivt lager.", Qgis.Warning)
+        if not isinstance(layer, QgsVectorLayer) or layer.geometryType() != Qgis.GeometryType.Line:
+            self.msg("Markera ett linjelager som aktivt lager.", Qgis.MessageLevel.Warning)
             return
         feats = layer.selectedFeatures()
         if len(feats) != 1:
-            self.msg("Markera exakt en linje i det aktiva lagret.", Qgis.Warning)
+            self.msg("Markera exakt en linje i det aktiva lagret.", Qgis.MessageLevel.Warning)
             return
         geom = QgsGeometry(feats[0].geometry())
         geom.transform(QgsCoordinateTransform(layer.crs(), CRS_3006, QgsProject.instance()))
@@ -511,11 +510,11 @@ class MarkhojdDock(QDockWidget):
                 self.msg(
                     "Linjen har osammanhängande delar (en lucka) och kan inte användas för en "
                     "sammanhängande höjdprofil. Välj en sammanhängande linje.",
-                    Qgis.Warning,
+                    Qgis.MessageLevel.Warning,
                     10,
                 )
                 return
-            geom = merged  # delarna hopkopplade och riktningen ensad
+            geom = merged  # parts joined and direction unified
         self.line_geom = geom
         self.line_tool.reset()
         self.line_tool.band.setToGeometry(geom, CRS_3006)
@@ -554,13 +553,13 @@ class MarkhojdDock(QDockWidget):
         try:
             pts = line_points(self.line_geom, spacing, limit=self.maxpts.value())
         except ValueError as e:
-            self.msg(str(e), Qgis.Warning, 10)
+            self.msg(str(e), Qgis.MessageLevel.Warning, 10)
             return
         if pts is None:
             self._update_line_info()
             return
         if not pts:
-            self.msg("Inga punkter på linjen – kontrollera geometrin.", Qgis.Warning)
+            self.msg("Inga punkter på linjen – kontrollera geometrin.", Qgis.MessageLevel.Warning)
             return
         layer = layers.new_layer(f"Markhöjd – linje {spacing:g} m", extra_fields=[("avstand", "double")])
         self._start_fetch(
@@ -585,11 +584,15 @@ class MarkhojdDock(QDockWidget):
             self._update_info()
             return
         if not pts:
-            self.msg("Inga gridpunkter föll inom området – minska punktavståndet.", Qgis.Warning)
+            self.msg("Inga gridpunkter föll inom området – minska punktavståndet.", Qgis.MessageLevel.Warning)
             return
         layer = layers.new_layer(f"Markhöjd – grid {spacing:g} m")
         self._start_fetch(
-            core.chunk_points(pts), layer, len(pts), c, (self.btn_fetch, self.progress, self.btn_cancel, self._update_info)
+            core.chunk_points(pts),
+            layer,
+            len(pts),
+            c,
+            (self.btn_fetch, self.progress, self.btn_cancel, self._update_info),
         )
 
     def _start_fetch(self, chunks, layer, total, client, widgets):
@@ -619,7 +622,7 @@ class MarkhojdDock(QDockWidget):
         try:
             res = self._client.get_heights(coords)
         except MarkhojdError as e:
-            self.msg(str(e), Qgis.Critical, 15)
+            self.msg(str(e), Qgis.MessageLevel.Critical, 15)
             return self._finish(failed=True)
         extras = [row[2:] for row in chunk]
         rows = [(r[0], r[1], r[2]) + tuple(extra) for r, extra in zip(res, extras)]
@@ -642,23 +645,23 @@ class MarkhojdDock(QDockWidget):
             text += f" ({self._nodata} saknade höjddata)"
         if self._cancel:
             text += " – avbrutet"
-        self.msg(text + ".", Qgis.Warning if (failed or self._cancel) else Qgis.Success)
+        self.msg(text + ".", Qgis.MessageLevel.Warning if (failed or self._cancel) else Qgis.MessageLevel.Success)
         self.save_layer.setLayer(self._layer)
         is_line = update_info == self._update_line_info
         if is_line and n > 0:
             self._last_line_layer = self._layer
             self.btn_show_profile.setEnabled(True)
         update_info()
-        # den andra hämtningsknappen kan ha blivit avstängd av _running; uppdatera båda
+        # the other fetch button may have been disabled by _running; update both
         other = self._update_line_info if is_line else self._update_info
         other()
 
-    # ------------------------------------------------------ profil
+    # ------------------------------------------------------ profile
     def show_profile(self):
-        """Visar avstånd/höjd för det senast hämtade linjelagret som en graf (frivilligt, inte standard)."""
+        """Show distance/height of the most recently fetched line layer as a graph (optional, not the default)."""
         layer = getattr(self, "_last_line_layer", None)
         if not layer or not self.line_geom:
-            self.msg("Hämta höjder längs en linje först.", Qgis.Warning)
+            self.msg("Hämta höjder längs en linje först.", Qgis.MessageLevel.Warning)
             return
         elev = layer.elevationProperties()
         elev.setDefaultsFromLayer(layer)
@@ -680,11 +683,11 @@ class MarkhojdDock(QDockWidget):
             canvas.setProject(QgsProject.instance())
             self._profile_dock = QDockWidget("Höjdprofil – Geodata: Markhöjd direkt", self.iface.mainWindow())
             self._profile_dock.setWidget(canvas)
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self._profile_dock)
+            self.iface.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self._profile_dock)
         return self._profile_dock.widget()
 
     def cleanup(self):
-        """Kallas när pluginet avaktiveras, så profilpanelen inte blir kvar övergiven."""
+        """Called when the plugin is unloaded, so the profile panel is not left behind."""
         if getattr(self, "_profile_dock", None) is not None:
             self.iface.removeDockWidget(self._profile_dock)
             self._profile_dock.deleteLater()
@@ -694,7 +697,7 @@ class MarkhojdDock(QDockWidget):
     def save(self):
         layer = self.save_layer.currentLayer()
         if not layer:
-            self.msg("Välj ett punktlager att spara.", Qgis.Warning)
+            self.msg("Välj ett punktlager att spara.", Qgis.MessageLevel.Warning)
             return
         path, flt = QFileDialog.getSaveFileName(
             self,
@@ -713,7 +716,8 @@ class MarkhojdDock(QDockWidget):
         if ext == ".csv":
             opts.layerOptions = ["GEOMETRY=AS_XYZ"]
         res = QgsVectorFileWriter.writeAsVectorFormatV3(layer, path, QgsProject.instance().transformContext(), opts)
-        if res[0] == QgsVectorFileWriter.NoError:
-            self.msg(f"Sparade {layer.featureCount()} punkter till {os.path.basename(path)}.", Qgis.Success)
+        if res[0] == QgsVectorFileWriter.WriterError.NoError:
+            name = os.path.basename(path)
+            self.msg(f"Sparade {layer.featureCount()} punkter till {name}.", Qgis.MessageLevel.Success)
         else:
-            self.msg(f"Kunde inte spara: {res[1]}", Qgis.Critical, 12)
+            self.msg(f"Kunde inte spara: {res[1]}", Qgis.MessageLevel.Critical, 12)

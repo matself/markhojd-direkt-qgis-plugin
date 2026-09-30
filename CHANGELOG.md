@@ -1,31 +1,32 @@
-# Ändringslogg
+# Changelog
 
 ## 1.0.0
-- Första stabila release. Bytt namn till "Geodata: Markhöjd direkt (Lantmäteriet)" med ny ikon, del av ett gemensamt namn-/ikonschema för de fyra Lantmäteriet-pluginen.
+- First stable release. Renamed to "Geodata: Markhöjd direkt (Lantmäteriet)" with a new icon, part of a shared naming and icon scheme for the four Lantmäteriet plugins.
+- Code comments, docstrings, metadata and documentation translated to English; the user interface remains in Swedish and is explained in the README.
+- Qt6-compatible enum usage; marked as QGIS 4 ready.
 
 ## 0.1.6
-- Anpassa punktavstånd siktar nu mot ca 100 punkter (samma gräns som varningstexten), inte mot Max antal punkter. Max antal punkter är bara en skyddsspärr och används som mål enbart om den är satt lägre.
+- "Adjust point spacing" now aims for about 100 points (the same limit as the warning text), not for "Max number of points". The maximum is only a safeguard and is used as the target only if it is set lower.
 
 ## 0.1.5
-- Gridet varnar (orange text) när antalet punkter blir fler än 100, med förslag att öka punktavståndet - gridet är tänkt för t.ex. en tomtkarta, inte för att bygga en egen höjdmodell av punkterna.
-- Ny, frivillig knapp Visa profil för en hämtad linje: öppnar en panel i QGIS med avstånd/höjd som en graf, byggd på QGIS egen höjdprofilkomponent. Visas inte automatiskt.
+- The grid warns (orange text) when there are more than 100 points, suggesting a larger point spacing. The grid is meant for e.g. a plot map, not for building a custom elevation model from the points.
+- New optional "Show profile" button for a fetched line: opens a panel in QGIS with distance/height as a graph, built on the QGIS elevation profile component. It is not shown automatically.
 
 ## 0.1.4
-- En MultiLineString (flera linjedelar, blandad ordning/riktning) slås automatiskt ihop till en sammanhängande linje för höjder längs en linje. En verkligt osammanhängande linje (lucka) avvisas med ett tydligt meddelande i stället för att ge felaktiga avstånd.
+- A MultiLineString (several line parts, mixed order/direction) is automatically merged into one continuous line for heights along a line. A truly disconnected line (gap) is rejected with a clear message instead of giving wrong distances.
 
 ## 0.1.3
-- Nytt läge: höjder längs en linje, med rita-linje-verktyg eller befintligt linjeobjekt. Punkterna får ett attribut avstand (meter från linjens början), lämpligt för en höjdprofil.
+- New mode: heights along a line, with a draw-line tool or an existing line feature. The points get an attribute avstand (meters from the start of the line), suitable for an elevation profile.
 
 ## 0.1.2
-- Installation via plugin-arkiv (plugins.xml) och uppdaterad README.
+- Installation via plugin repository (plugins.xml) and updated README.
 
 ## 0.1.1
-- Inloggning med användarnamn/lösenord (Basic) i stället för OAuth2; egen nätverkshanterare (inga krascher eller inloggningsrutor vid 401).
-- Höjdvärdet placeras till höger om punkten.
-- Exakt antal gridpunkter i panelen.
-- Disclaimer (fristående plugin) och användarhandledning i docs.
-- LICENSE (GPL-3.0) följer med i ZIP-paketet.
+- Login with username/password (Basic) instead of OAuth2; own network manager (no crashes or login dialogs on 401).
+- The height value is placed to the right of the point.
+- Exact number of grid points in the panel.
+- Disclaimer (independent plugin) and user guide in docs.
+- LICENSE (GPL-3.0) included in the ZIP package.
 
 ## 0.1.0
-- Första version: klicka för höjd, höjdgrid i ritat/markerat område, spara som 3D-punkter.
-
+- First version: click for height, height grid in a drawn/selected area, save as 3D points.

@@ -1,4 +1,4 @@
-"""Ren logik utan QGIS-beroenden: begränsningar, uppdelning i anrop och tolkning av svar."""
+"""Pure logic without QGIS dependencies: limits, splitting into requests and parsing responses."""
 
 import json
 import math
@@ -6,10 +6,10 @@ import math
 SRID = 3006
 CRS_URN = "urn:ogc:def:crs:EPSG::3006"
 
-# Begränsningar enligt teknisk beskrivning v1.0.1 (GeometriRequest)
+# Limits according to the technical description v1.0.1 (GeometriRequest)
 MAX_POINTS_PER_REQUEST = 1000
-# Felmeddelandet i den tekniska beskrivningen visar att en yta får vara högst 1 000 000 m2.
-# Vi håller varje anrop inom en ruta på 900 x 900 m så att gränsen inte kan slå till.
+# The error message in the technical description shows that an area may be at most 1,000,000 m2.
+# Each request is kept within a 900 x 900 m tile so that the limit cannot be hit.
 MAX_AREA_M2 = 1_000_000
 TILE_SIZE_M = 900.0
 
@@ -17,9 +17,9 @@ DEFAULT_NODATA = -9999.0
 
 
 def chunk_points(points, max_points=MAX_POINTS_PER_REQUEST, tile=TILE_SIZE_M):
-    """Dela punkter i anrop om högst ``max_points`` punkter inom en ruta på ``tile`` m.
+    """Split points into requests of at most ``max_points`` points within a ``tile`` m square.
 
-    Punkterna sorteras rutvis så att varje anrop blir geografiskt kompakt.
+    The points are grouped per tile so that each request is geographically compact.
     """
     tiles = {}
     for p in points:
@@ -34,17 +34,17 @@ def chunk_points(points, max_points=MAX_POINTS_PER_REQUEST, tile=TILE_SIZE_M):
 
 
 def chunk_sequential(points, max_points=MAX_POINTS_PER_REQUEST):
-    """Dela punkter i anrop om högst ``max_points`` punkter, utan att ändra ordningen.
+    """Split points into requests of at most ``max_points`` points, keeping the order.
 
-    Används för linjer, där ordningen behövs för att avståndet längs linjen ska stämma.
-    Ingen yt-baserad uppdelning behövs, eftersom tjänstens enda dokumenterade begränsning
-    för LineString/MultiLineString är antalet brytpunkter.
+    Used for lines, where the order is needed for the distance along the line to be correct.
+    No area-based splitting is needed, since the only documented limit of the service for
+    LineString/MultiLineString is the number of vertices.
     """
     return [points[i : i + max_points] for i in range(0, len(points), max_points)]
 
 
 def build_multipoint_body(points):
-    """JSON-kropp (bytes) för POST /hojd med en MultiPoint i SWEREF 99 TM."""
+    """JSON body (bytes) for POST /hojd with a MultiPoint in SWEREF 99 TM."""
     body = {
         "type": "MultiPoint",
         "crs": {"type": "name", "properties": {"name": CRS_URN}},
@@ -60,7 +60,7 @@ def _z_or_none(z, nodata):
 
 
 def parse_heights(payload, ignore_nodata=True):
-    """Tolka ett HojdResponse (dict). Returnerar lista av (e, n, z eller None)."""
+    """Parse a HojdResponse (dict). Returns a list of (e, n, z or None)."""
     nodata = (payload.get("properties") or {}).get("nodatavalue", DEFAULT_NODATA)
     geom = payload.get("geometry") or {}
     coords = geom.get("coordinates") or []
@@ -74,7 +74,7 @@ def parse_heights(payload, ignore_nodata=True):
 
 
 def parse_fault(text):
-    """Läsbar text ur ett Fault-svar (code/reason/errors)."""
+    """Readable text from a Fault response (code/reason/errors)."""
     try:
         data = json.loads(text)
         parts = [f"{data.get('code', '')} {data.get('reason', '')}".strip()]
@@ -85,7 +85,7 @@ def parse_fault(text):
 
 
 def estimate_grid(area_m2, spacing):
-    """Uppskattat antal gridpunkter och antal anrop för en yta."""
+    """Estimated number of grid points and number of requests for an area."""
     if spacing <= 0:
         return 0, 0
     n = int(area_m2 / (spacing * spacing))
@@ -93,7 +93,7 @@ def estimate_grid(area_m2, spacing):
 
 
 def spacing_for_max_points(area_m2, max_points):
-    """Minsta glesning (m, avrundad uppåt till helt meter) som ger högst ``max_points`` punkter."""
+    """Smallest spacing (m, rounded up to whole meters) that gives at most ``max_points`` points."""
     if max_points <= 0 or area_m2 <= 0:
         return 1
     return max(1, math.ceil(math.sqrt(area_m2 / max_points)))

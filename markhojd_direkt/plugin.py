@@ -23,7 +23,7 @@ class MarkhojdPlugin:
         self.iface.addPluginToMenu(TITLE, self.action)
         self.iface.addToolBarIcon(self.action)
         self.dock = MarkhojdDock(self.iface, self.iface.mainWindow())
-        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dock)
+        self.iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock)
         self.dock.hide()
         self.dock.visibilityChanged.connect(self.action.setChecked)
 

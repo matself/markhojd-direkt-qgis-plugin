@@ -1,4 +1,4 @@
-"""Bygger dist/markhojd_direkt.zip som kan installeras via Plugins > Install from ZIP."""
+"""Builds dist/markhojd_direkt.zip, installable via Plugins > Install from ZIP."""
 import pathlib
 import zipfile
 
@@ -9,11 +9,11 @@ with zipfile.ZipFile(out / "markhojd_direkt.zip", "w", zipfile.ZIP_DEFLATED) as 
     for f in (root / "markhojd_direkt").rglob("*"):
         if f.is_file() and "__pycache__" not in f.parts:
             z.write(f, f.relative_to(root))
-    z.write(root / "LICENSE", "markhojd_direkt/LICENSE")  # licensen ska följa med i paketet
+    z.write(root / "LICENSE", "markhojd_direkt/LICENSE")  # the license must be included in the package
 print(out / "markhojd_direkt.zip")
 
 
-# plugins.xml för installation via "Hantera och installera insticksmoduler > Inställningar > Lägg till"
+# plugins.xml for installation via Manage and Install Plugins > Settings > Add
 import configparser
 from xml.sax.saxutils import escape
 

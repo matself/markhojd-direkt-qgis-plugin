@@ -1,18 +1,21 @@
 [general]
 name=Geodata: Markhöjd direkt (Lantmäteriet)
 qgisMinimumVersion=3.34
-description=Hämta markhöjd från Lantmäteriets tjänst Markhöjd Direkt: klicka i kartan eller skapa ett höjdgrid i ett område.
-about=Klicka i kartan för att få markhöjden markerad med kryss och höjdvärde, eller rita ett område och hämta höjdpunkter i ett regelbundet grid. Punkterna skapas som 3D-punkter (PointZ, SWEREF 99 TM) och kan sparas till GeoPackage, Shapefile eller CSV. Kräver ett systemkonto (användarnamn/lösenord) som har beställt tjänsten Markhöjd Direkt hos Lantmäteriet. Pluginet är fristående och inte utvecklat av eller kopplat till Lantmäteriet; namnet används bara som källhänvisning.
+qgisMaximumVersion=4.99
+description=Get ground elevation from Lantmäteriet's Markhöjd Direkt service: click the map or generate an elevation grid or line profile points.
+about=Click the map to get the ground elevation marked with a cross and the height value, draw an area to fetch elevation points in a regular grid, or fetch points along a line. Points are created as 3D points (PointZ, SWEREF 99 TM) and can be saved to GeoPackage, Shapefile or CSV. Covers Sweden only. Requires a system account (username/password) that has ordered the Markhöjd Direkt service from Lantmäteriet; there are no other external dependencies. The plugin is independent and not developed by or affiliated with Lantmäteriet; the name is used only to identify the data source. The user interface is in Swedish; an English explanation of all controls is in the README.
 version=1.0.0
 author=Mats Elfström
 email=mats.elfstrom@giskraft.se
 category=Web
-tags=lantmäteriet,höjd,markhöjd,elevation,sweden,3d
+tags=lantmateriet,elevation,height,sweden,3d
 homepage=https://github.com/matself/markhojd-direkt-qgis-plugin
 repository=https://github.com/matself/markhojd-direkt-qgis-plugin
 tracker=https://github.com/matself/markhojd-direkt-qgis-plugin/issues
 icon=icon.svg
+license=GPL-3.0
 experimental=False
 deprecated=False
-changelog=1.0.0 - Första stabila release. Bytt namn till "Geodata: Markhöjd direkt (Lantmäteriet)" med ny ikon, del av ett gemensamt namn-/ikonschema för de fyra Lantmäteriet-pluginen.
-    0.1.6 - Anpassa punktavstånd siktar nu mot ca 100 punkter, inte mot Max antal punkter
+hasProcessingProvider=no
+changelog=1.0.0 - First stable release. Renamed with a new icon, part of a shared naming and icon scheme for four Lantmäteriet plugins. Code and documentation translated to English; the user interface remains Swedish. Marked as QGIS 4 ready.
+    0.1.6 - "Adjust point spacing" now aims for about 100 points instead of the maximum number of points.
