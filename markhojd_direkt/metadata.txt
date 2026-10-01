@@ -17,6 +17,6 @@ license=GPL-3.0
 experimental=False
 deprecated=False
 hasProcessingProvider=no
-changelog=1.0.1 - Code style fixes (flake8); release zip is now named <package>.<version>.zip.
+changelog=1.0.1 - Fixed the elevation profile panel opening as a tiny floating window (QGIS 4); code style fixes (flake8).
     1.0.0 - First stable release. Renamed with a new icon, part of a shared naming and icon scheme for four Lantmäteriet plugins. Code and documentation translated to English; the user interface remains Swedish. Marked as QGIS 4 ready.
     0.1.6 - "Adjust point spacing" now aims for about 100 points instead of the maximum number of points.

@@ -1,6 +1,7 @@
 # Changelog
 
 ## 1.0.1
+- Fixed the elevation profile panel ("Visa profil") opening as a tiny floating window in QGIS 4; it is now docked at the bottom with a sensible size.
 - Code style fixes (flake8).
 - The release zip is now named `<package>.<version>.zip`.
 

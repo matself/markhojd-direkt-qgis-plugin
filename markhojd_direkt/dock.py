@@ -16,7 +16,7 @@ from qgis.core import (
     QgsVectorLayer,
 )
 from qgis.gui import QgsAuthConfigSelect, QgsElevationProfileCanvas, QgsMapLayerComboBox
-from qgis.PyQt.QtCore import Qt, QTimer
+from qgis.PyQt.QtCore import QSize, Qt, QTimer
 from qgis.PyQt.QtGui import QFont
 from qgis.PyQt.QtWidgets import (
     QComboBox,
@@ -681,9 +681,15 @@ class MarkhojdDock(QDockWidget):
         if getattr(self, "_profile_dock", None) is None:
             canvas = QgsElevationProfileCanvas(self.iface.mainWindow())
             canvas.setProject(QgsProject.instance())
+            # The canvas has no size hint of its own: without a minimum size the dock
+            # collapses to a tiny floating stamp in the top left corner.
+            canvas.setMinimumSize(QSize(400, 250))
             self._profile_dock = QDockWidget("Höjdprofil – Geodata: Markhöjd direkt", self.iface.mainWindow())
+            self._profile_dock.setObjectName("MarkhojdDirektProfileDock")
             self._profile_dock.setWidget(canvas)
+            self._profile_dock.setFloating(False)
             self.iface.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self._profile_dock)
+            self.iface.mainWindow().resizeDocks([self._profile_dock], [300], Qt.Orientation.Vertical)
         return self._profile_dock.widget()
 
     def cleanup(self):
