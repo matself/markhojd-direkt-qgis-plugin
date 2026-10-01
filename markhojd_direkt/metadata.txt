@@ -4,7 +4,7 @@ qgisMinimumVersion=3.34
 qgisMaximumVersion=4.99
 description=Get ground elevation from Lantmäteriet's Markhöjd Direkt service: click the map or generate an elevation grid or line profile points.
 about=Click the map to get the ground elevation marked with a cross and the height value, draw an area to fetch elevation points in a regular grid, or fetch points along a line. Points are created as 3D points (PointZ, SWEREF 99 TM) and can be saved to GeoPackage, Shapefile or CSV. Covers Sweden only. Requires a system account (username/password) that has ordered the Markhöjd Direkt service from Lantmäteriet; there are no other external dependencies. The plugin is independent and not developed by or affiliated with Lantmäteriet; the name is used only to identify the data source. The user interface is in Swedish; an English explanation of all controls is in the README.
-version=1.0.0
+version=1.0.1
 author=Mats Elfström
 email=mats.elfstrom@giskraft.se
 category=Web
@@ -17,5 +17,6 @@ license=GPL-3.0
 experimental=False
 deprecated=False
 hasProcessingProvider=no
-changelog=1.0.0 - First stable release. Renamed with a new icon, part of a shared naming and icon scheme for four Lantmäteriet plugins. Code and documentation translated to English; the user interface remains Swedish. Marked as QGIS 4 ready.
+changelog=1.0.1 - Code style fixes (flake8); release zip is now named <package>.<version>.zip.
+    1.0.0 - First stable release. Renamed with a new icon, part of a shared naming and icon scheme for four Lantmäteriet plugins. Code and documentation translated to English; the user interface remains Swedish. Marked as QGIS 4 ready.
     0.1.6 - "Adjust point spacing" now aims for about 100 points instead of the maximum number of points.

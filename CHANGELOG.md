@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+- Code style fixes (flake8).
+- The release zip is now named `<package>.<version>.zip`.
+
 ## 1.0.0
 - First stable release. Renamed to "Geodata: Markhöjd direkt (Lantmäteriet)" with a new icon, part of a shared naming and icon scheme for the four Lantmäteriet plugins.
 - Code comments, docstrings, metadata and documentation translated to English; the user interface remains in Swedish and is explained in the README.
