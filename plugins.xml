@@ -6,10 +6,10 @@
     <version>1.0.0</version>
     <qgis_minimum_version>3.34</qgis_minimum_version>
     <homepage>https://github.com/matself/markhojd-direkt-qgis-plugin</homepage>
-    <file_name>markhojd_direkt.zip</file_name>
+    <file_name>markhojd_direkt.1.0.0.zip</file_name>
     <icon>icon.svg</icon>
     <author_name><![CDATA[Mats Elfström]]></author_name>
-    <download_url>https://github.com/matself/markhojd-direkt-qgis-plugin/releases/download/v1.0.0/markhojd_direkt.zip</download_url>
+    <download_url>https://github.com/matself/markhojd-direkt-qgis-plugin/releases/download/v1.0.0/markhojd_direkt.1.0.0.zip</download_url>
     <uploaded_by><![CDATA[Mats Elfström]]></uploaded_by>
     <experimental>False</experimental>
     <deprecated>False</deprecated>
