@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugins>
-  <pyqgis_plugin name="Geodata: Markhöjd direkt (Lantmäteriet)" version="1.0.0">
+  <pyqgis_plugin name="Geodata: Markhöjd direkt (Lantmäteriet)" version="1.0.1">
     <description><![CDATA[Get ground elevation from Lantmäteriet's Markhöjd Direkt service: click the map or generate an elevation grid or line profile points.]]></description>
     <about><![CDATA[Click the map to get the ground elevation marked with a cross and the height value, draw an area to fetch elevation points in a regular grid, or fetch points along a line. Points are created as 3D points (PointZ, SWEREF 99 TM) and can be saved to GeoPackage, Shapefile or CSV. Covers Sweden only. Requires a system account (username/password) that has ordered the Markhöjd Direkt service from Lantmäteriet; there are no other external dependencies. The plugin is independent and not developed by or affiliated with Lantmäteriet; the name is used only to identify the data source. The user interface is in Swedish; an English explanation of all controls is in the README.]]></about>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <qgis_minimum_version>3.34</qgis_minimum_version>
     <homepage>https://github.com/matself/markhojd-direkt-qgis-plugin</homepage>
-    <file_name>markhojd_direkt.1.0.0.zip</file_name>
+    <file_name>markhojd_direkt.1.0.1.zip</file_name>
     <icon>icon.svg</icon>
     <author_name><![CDATA[Mats Elfström]]></author_name>
-    <download_url>https://github.com/matself/markhojd-direkt-qgis-plugin/releases/download/v1.0.0/markhojd_direkt.1.0.0.zip</download_url>
+    <download_url>https://github.com/matself/markhojd-direkt-qgis-plugin/releases/download/v1.0.1/markhojd_direkt.1.0.1.zip</download_url>
     <uploaded_by><![CDATA[Mats Elfström]]></uploaded_by>
     <experimental>False</experimental>
     <deprecated>False</deprecated>
