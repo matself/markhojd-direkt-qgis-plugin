@@ -29,7 +29,7 @@ def chunk_points(points, max_points=MAX_POINTS_PER_REQUEST, tile=TILE_SIZE_M):
     for key in sorted(tiles):
         pts = tiles[key]
         for i in range(0, len(pts), max_points):
-            chunks.append(pts[i : i + max_points])
+            chunks.append(pts[i:i + max_points])
     return chunks
 
 
@@ -40,7 +40,7 @@ def chunk_sequential(points, max_points=MAX_POINTS_PER_REQUEST):
     No area-based splitting is needed, since the only documented limit of the service for
     LineString/MultiLineString is the number of vertices.
     """
-    return [points[i : i + max_points] for i in range(0, len(points), max_points)]
+    return [points[i:i + max_points] for i in range(0, len(points), max_points)]
 
 
 def build_multipoint_body(points):

@@ -88,13 +88,13 @@ def _cross_symbol():
 
 def plugin_layers():
     return [
-        l for l in QgsProject.instance().mapLayers().values()
-        if isinstance(l, QgsVectorLayer) and l.customProperty(PROP)
+        layer for layer in QgsProject.instance().mapLayers().values()
+        if isinstance(layer, QgsVectorLayer) and layer.customProperty(PROP)
     ]
 
 
 def find_click_layer():
-    for l in plugin_layers():
-        if l.name() == CLICK_LAYER_NAME:
-            return l
+    for layer in plugin_layers():
+        if layer.name() == CLICK_LAYER_NAME:
+            return layer
     return None
