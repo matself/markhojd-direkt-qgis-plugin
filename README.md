@@ -1,3 +1,5 @@
+<img src="markhojd_direkt/icon.png" alt="" width="72" align="right">
+
 # Geodata: Markhöjd direkt (Lantmäteriet)
 
 > **Disclaimer:** This plugin is independent and has no connection to, and is not approved or
