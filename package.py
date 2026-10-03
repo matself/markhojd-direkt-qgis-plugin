@@ -15,7 +15,6 @@ with zipfile.ZipFile(out / zip_name, "w", zipfile.ZIP_DEFLATED) as z:
     for f in (root / "markhojd_direkt").rglob("*"):
         if f.is_file() and "__pycache__" not in f.parts:
             z.write(f, f.relative_to(root))
-    z.write(root / "LICENSE", "markhojd_direkt/LICENSE")  # the license must be included in the package
 print(out / zip_name)
 
 
